@@ -30,7 +30,7 @@ io.set('log level',1);
 
 // Listen for Socket.IO Connections. Once connected, start the game logic.
 io.sockets.on('connection', function (socket) {
-    //console.log('client connected');
+    console.log('client connected');
     agx.initGame(io, socket);
 });
 

@@ -1,5 +1,5 @@
 ;
-jQuery(function($){    
+jQuery(function($){
     'use strict';
 
     /**
@@ -39,7 +39,8 @@ jQuery(function($){
         onConnected : function() {
             // Cache a copy of the client's socket.IO session ID on the App
             App.mySocketId = IO.socket.socket.sessionid;
-            // console.log(data.message);
+            console.log('mySocketId:' + App.mySocketId);
+            console.log(data.message);
         },
 
         /**
@@ -615,7 +616,7 @@ jQuery(function($){
                     alignVert:false,
                     widthOnly:true,
                     reProcess:true,
-                    maxFontSize:300
+                    maxFontSize:80
                 }
             );
         }
