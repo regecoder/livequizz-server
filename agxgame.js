@@ -1,6 +1,64 @@
 var io;
 var gameSocket;
 
+var chronoConfig = {
+    newGame: {
+        name: 'newGame',
+        duration: 10
+    }
+};
+
+var chrono = {
+     timeLeft: 0,
+     timer: undefined,
+     gameId: undefined,
+     data: undefined,
+     callback: undefined,
+     chronoConfigItem: undefined,
+
+
+     start: function (gameId, chronoConfigItem, callback) {
+        this.gameId = gameId
+        this.callback = callback;
+        this.chronoConfigItem = chronoConfigItem;
+         //Initialisation du nombre de secondes selon la valeur passée en paramètre
+         this.timeLeft = chronoConfigItem.duration;
+         this.data = {
+            timeLeft: this.timeLeft,
+            duration: this.chronoConfigItem.duration
+         }
+         //Démarrage du chrono
+         this.timer = setInterval(this.tick.bind(this), 1000);
+
+        io.sockets.in(this.gameId).emit(this.chronoConfigItem.name + 'CountdownStarted', this.data);
+     },
+
+     tick: function () {
+         --this.timeLeft;
+         console.log('timeleft:' + this.timeLeft);
+            if (this.timeLeft === 0) {
+                this.stop();
+            } else {
+                 this.data.timeLeft = this.timeLeft;
+                 //On actualise la valeur affichée du nombre de secondes
+                io.sockets.in(this.gameId).emit(this.chronoConfigItem.name + 'CountdownTick', this.data);
+            }
+     },
+
+     stop: function () {
+         //quand le temps est écoulé, on arrête le timer
+         clearInterval(this.timer);
+         //Et on appelle la fonction qui gère la fin du temps imparti et poursuit le traitement
+         //Ici, pour le test, simplement une fonction alert
+        if (this.callback && typeof(this.callback) === 'function') {
+            this.callback();
+        }
+        io.sockets.in(this.gameId).emit(this.chronoConfigItem + 'CountdownCompleted');
+     }
+ };
+
+
+
 /**
  * This function is called by index.js to initialize a new game instance.
  *
@@ -15,7 +73,7 @@ exports.initGame = function(sio, socket){
     // Host Events
     gameSocket.on('hostCreateNewGame', hostCreateNewGame);
     gameSocket.on('hostRoomFull', hostPrepareGame);
-    gameSocket.on('hostCountdownFinished', hostStartGame);
+    gameSocket.on('hostNewGameRequestCountdown', hostManageNewGameCountdown);
     gameSocket.on('hostNextRound', hostNextRound);
 
     // Player Events
@@ -23,6 +81,7 @@ exports.initGame = function(sio, socket){
     gameSocket.on('playerAnswer', playerAnswer);
     gameSocket.on('playerRestart', playerRestart);
 }
+
 
 /* *******************************
    *                             *
@@ -54,8 +113,15 @@ function hostPrepareGame(gameId) {
         mySocketId : sock.id,
         gameId : gameId
     };
-    //console.log("All Players Present. Preparing game...");
+
     io.sockets.in(data.gameId).emit('beginNewGame', data);
+}
+
+function hostManageNewGameCountdown(gameId) {
+
+    var callback = hostStartGame.bind(null, gameId);
+
+    chrono.start(gameId, chronoConfig.newGame, callback);
 }
 
 /*

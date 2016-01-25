@@ -31,6 +31,9 @@ jQuery(function($){
             IO.socket.on('hostCheckAnswer', IO.hostCheckAnswer);
             IO.socket.on('gameOver', IO.gameOver);
             IO.socket.on('error', IO.error );
+            IO.socket.on('newGameCountdownStarted', IO.showNewGameCountdown);
+            IO.socket.on('newGameCountdownTick', IO.showNewGameCountdown);
+            IO.socket.on('newGameCountdownCompleted', IO.hideNewGameCountdown);
         },
 
         /**
@@ -40,7 +43,7 @@ jQuery(function($){
             // Cache a copy of the client's socket.IO session ID on the App
             App.mySocketId = IO.socket.socket.sessionid;
             console.log('mySocketId:' + App.mySocketId);
-            console.log(data.message);
+            // console.log(data.message);
         },
 
         /**
@@ -70,7 +73,7 @@ jQuery(function($){
          * @param data
          */
         beginNewGame : function(data) {
-            App[App.myRole].gameCountdown(data);
+            App[App.myRole].beginNewGame(data);
         },
 
         /**
@@ -109,7 +112,13 @@ jQuery(function($){
          */
         error : function(data) {
             alert(data.message);
-        }
+        },
+
+        showNewGameCountdown : function(data) {
+            App[App.myRole].showNewGameCountdown(data);
+        },
+
+        hideNewGameCountdown : function() {}
 
     };
 
@@ -267,6 +276,8 @@ jQuery(function($){
              * @param data{{playerName: string}}
              */
             updateWaitingScreen: function(data) {
+
+                // console.log(data);
                 // If this is a restarted game, show the screen.
                 if ( App.Host.isNewGame ) {
                     App.Host.displayNewGameScreen();
@@ -292,19 +303,13 @@ jQuery(function($){
             },
 
             /**
-             * Show the countdown screen
+             * Begin a new game
              */
-            gameCountdown : function() {
+            beginNewGame : function() {
 
                 // Prepare the game screen with new HTML
                 App.$gameArea.html(App.$hostGame);
                 App.doTextFit('#hostWord');
-
-                // Begin the on-screen countdown timer
-                var $secondsLeft = $('#hostWord');
-                App.countDown( $secondsLeft, 5, function(){
-                    IO.socket.emit('hostCountdownFinished', App.gameId);
-                });
 
                 // Display the players' names on screen
                 $('#player1Score')
@@ -318,7 +323,11 @@ jQuery(function($){
                 // Set the Score section on screen to 0 for each player.
                 $('#player1Score').find('.score').attr('id',App.Host.players[0].mySocketId);
                 $('#player2Score').find('.score').attr('id',App.Host.players[1].mySocketId);
+
+                IO.socket.emit('hostNewGameRequestCountdown', App.gameId);
             },
+
+            showNewGameCountdown: function() {},
 
             /**
              * Show the word for the current round on screen.
@@ -513,10 +522,17 @@ jQuery(function($){
              * Display 'Get Ready' while the countdown timer ticks down.
              * @param hostData
              */
-            gameCountdown : function(hostData) {
+            beginNewGame : function(hostData) {
                 App.Player.hostSocketId = hostData.mySocketId;
                 $('#gameArea')
-                    .html('<div class="gameOver">Get Ready!</div>');
+                    .html('<div class="gameOver">Attente avant démarrage du quiz</div><div class="countdown"></div>');
+            },
+
+            showNewGameCountdown : function(data) {
+                console.log('timeleft:' + data.timeLeft);
+
+                $('#gameArea')
+                    .html('<div class="gameOver">Attente avant démarrage du quiz</div><div style="font-size: 20em; text-align: center;">' + data.timeLeft + '/' + data.duration + '</div>');
             },
 
             /**
