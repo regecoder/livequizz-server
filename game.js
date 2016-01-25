@@ -130,7 +130,7 @@ function hostManageNewGameCountdown(gameId) {
  */
 function hostStartGame(gameId) {
     console.log('Game Started.');
-    sendWord(0,gameId);
+    sendWord(0, gameId);
 };
 
 /**
@@ -143,7 +143,7 @@ function hostNextRound(data) {
         sendWord(data.round, data.gameId);
     } else {
         // If the current round exceeds the number of words, send the 'gameOver' event.
-        io.sockets.in(data.gameId).emit('gameOver',data);
+        io.sockets.in(data.gameId).emit('gameOver', data);
     }
 }
 /* *****************************
@@ -282,6 +282,8 @@ function shuffle(array) {
 
     return array;
 }
+
+var quiz = [];
 
 /**
  * Each element in the array provides data for a single round in the game.
