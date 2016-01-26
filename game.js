@@ -1,12 +1,87 @@
 var io;
 var gameSocket;
 
-var chronoConfig = {
-    newGame: {
-        name: 'newGame',
-        duration: 10
+var scenario = [
+    {
+        action: 'quizzStart',
+        tempo: 10
+    },
+    {
+        action: 'questionStart',
+        tempo: 10
+    },
+    {
+        action: 'questionPreview',
+        tempo: 2
+    },
+    {
+        action: 'responseStart',
+        tempo: 4
     }
+];
+
+var QuizEngine = function(quiz, scenario) {
+
+    this.quiz = quiz;
+    this.scenario = scenario;
+
+    var start = function() {
+        console.log('quizzEngine start');
+    };
+
+    this.start = start;
 };
+
+
+    // newGame: {
+    //     name: 'newGame',
+    //     duration: 10
+    // },
+    // roundPreview: {
+    //     name: 'roundPreview',
+    //     duration: 2
+    // }
+
+var quiz = [];
+
+(function() {[]
+    var quizItem;
+    var str;
+    var i;
+
+    for (i = 0; i < 10; i++) {
+        str = 'Q' + i;
+        quizItem = {
+            question: {
+                text: str,
+                answer: [
+                    {
+                        id: 1,
+                        text: "1"
+                    },
+                    {
+                        id: 2,
+                        text: "2"
+                    },
+                    {
+                        id: 3,
+                        text: "3"
+                    },
+                    {
+                        id: 4,
+                        text: "4"
+                    }
+                ],
+                goodAnswer: 1
+            },
+            response: {
+                text: str
+            }
+        };
+        quiz.push(quizItem);
+    };
+
+})();
 
 var chrono = {
      timeLeft: 0,
@@ -15,9 +90,13 @@ var chrono = {
      data: undefined,
      callback: undefined,
      chronoConfigItem: undefined,
-
+     isStarting: false,
 
      start: function (gameId, chronoConfigItem, callback) {
+        if (this.isStarting) {
+            return;
+        }
+        console.log("start:" + chronoConfigItem.duration + '/' + chronoConfigItem.name);
         this.gameId = gameId
         this.callback = callback;
         this.chronoConfigItem = chronoConfigItem;
@@ -28,14 +107,16 @@ var chrono = {
             duration: this.chronoConfigItem.duration
          }
          //Démarrage du chrono
+         console.log('setInterval' + this.timeLeft);
          this.timer = setInterval(this.tick.bind(this), 1000);
+         this.isStarting = true;
 
         io.sockets.in(this.gameId).emit(this.chronoConfigItem.name + 'CountdownStarted', this.data);
      },
 
      tick: function () {
+         console.log('tick:' + this.timeLeft);
          --this.timeLeft;
-         console.log('timeleft:' + this.timeLeft);
             if (this.timeLeft === 0) {
                 this.stop();
             } else {
@@ -46,8 +127,10 @@ var chrono = {
      },
 
      stop: function () {
+         console.log('stop chrono:' + this.timeLeft);
          //quand le temps est écoulé, on arrête le timer
-         clearInterval(this.timer);
+        clearInterval(this.timer);
+        this.isStarting = false;
          //Et on appelle la fonction qui gère la fin du temps imparti et poursuit le traitement
          //Ici, pour le test, simplement une fonction alert
         if (this.callback && typeof(this.callback) === 'function') {
@@ -71,9 +154,9 @@ exports.initGame = function(sio, socket){
     gameSocket.emit('connected', { message: "You are connected!" });
 
     // Host Events
-    gameSocket.on('hostCreateNewGame', hostCreateNewGame);
-    gameSocket.on('hostRoomFull', hostPrepareGame);
-    gameSocket.on('hostNewGameRequestCountdown', hostManageNewGameCountdown);
+    gameSocket.on('openRoomRequested', openNewRoom);
+    gameSocket.on('startQuizRequested', startQuiz);
+    // gameSocket.on('hostNewGameRequestCountdown', hostManageNewGameCountdown);
     gameSocket.on('hostNextRound', hostNextRound);
 
     // Player Events
@@ -90,38 +173,37 @@ exports.initGame = function(sio, socket){
    ******************************* */
 
 /**
- * The 'START' button was clicked and 'hostCreateNewGame' event occurred.
+ * Open an new room
  */
-function hostCreateNewGame() {
+function openNewRoom() {
     // Create a unique Socket.IO Room
     var thisGameId = ( Math.random() * 100000 ) | 0;
 
     // Return the Room ID (gameId) and the socket ID (mySocketId) to the browser client
-    this.emit('newGameCreated', {gameId: thisGameId, mySocketId: this.id});
+    this.emit('newRoomOpened', {gameId: thisGameId, mySocketId: this.id});
 
     // Join the Room and wait for the players
     this.join(thisGameId.toString());
 };
 
 /*
- * Two players have joined. Alert the host!
- * @param gameId The game ID / room ID
+ * Start quiz
+ * @param gameId
  */
-function hostPrepareGame(gameId) {
+function startQuiz(gameId) {
+    console.log('startQuiz' + gameId);
+
+    // Start the quiz
     var sock = this;
     var data = {
         mySocketId : sock.id,
         gameId : gameId
     };
 
-    io.sockets.in(data.gameId).emit('beginNewGame', data);
-}
+    var quizEngine = new QuizEngine(quiz, scenario);
+    quizEngine.start();
 
-function hostManageNewGameCountdown(gameId) {
-
-    var callback = hostStartGame.bind(null, gameId);
-
-    chrono.start(gameId, chronoConfig.newGame, callback);
+    io.sockets.in(data.gameId).emit('newQuizStarted', data);
 }
 
 /*
@@ -129,18 +211,36 @@ function hostManageNewGameCountdown(gameId) {
  * @param gameId The game ID / room ID
  */
 function hostStartGame(gameId) {
-    console.log('Game Started.');
-    sendWord(0, gameId);
+    console.log('Game Started:' + gameId);
+    startNewRound(0, gameId);
 };
+
+
+
+function hostRoundPreviewCompleted(gameId) {
+    io.sockets.in(gameId).emit('roundPreviewCompleted', gameId);
+}
+
+function hostManageNewGameCountdown(gameId) {
+
+    var callback = startQuiz.bind(null, gameId);
+    chrono.start(gameId, chronoConfig.newGame, callback);
+}
+
+function hostManageRoundPreviewCountdown(gameId) {
+
+    var callback = hostRoundPreviewCompleted.bind(null, gameId);
+    chrono.start(gameId, chronoConfig.roundPreview, callback);
+}
 
 /**
  * A player answered correctly. Time for the next word.
  * @param data Sent from the client. Contains the current round and gameId (room)
  */
 function hostNextRound(data) {
-    if(data.round < wordPool.length ){
+    if(data.roundIndex < quiz.length ){
         // Send a new set of words back to the host and players.
-        sendWord(data.round, data.gameId);
+        startNewRound(data.roundIndex, data.gameId);
     } else {
         // If the current round exceeds the number of words, send the 'gameOver' event.
         io.sockets.in(data.gameId).emit('gameOver', data);
@@ -159,10 +259,10 @@ function hostNextRound(data) {
  * @param data Contains data entered via player's input - playerName and gameId.
  */
 function playerJoinGame(data) {
-    console.log('Player ' + data.playerName + 'attempting to join game: ' + data.gameId );
 
     // A reference to the player's Socket.IO socket object
     var sock = this;
+    console.log('Player ' + data.playerName + ' joining game: ' + data.gameId + ' with socketId: ' + sock.id );
 
     // Look up the room ID in the Socket.IO manager object.
     var room = gameSocket.manager.rooms["/" + data.gameId];
@@ -211,7 +311,8 @@ function playerRestart(data) {
 }
 
 /* *************************
-   *                       *
+   *
+   *                          *
    *      GAME LOGIC       *
    *                       *
    ************************* */
@@ -222,9 +323,11 @@ function playerRestart(data) {
  * @param wordPoolIndex
  * @param gameId The room identifier
  */
-function sendWord(wordPoolIndex, gameId) {
-    var data = getWordData(wordPoolIndex);
-    io.sockets.in(data.gameId).emit('newWordData', data);
+function startNewRound(roundIndex, gameId) {
+    var data = getRoundData(roundIndex);
+
+    // hostManageRoundPreviewCountdown(gameId);
+    io.sockets.in(gameId).emit('startNewRound', data);
 }
 
 /**
@@ -234,114 +337,17 @@ function sendWord(wordPoolIndex, gameId) {
  * @param i The index of the wordPool.
  * @returns {{round: *, word: *, answer: *, list: Array}}
  */
-function getWordData(i){
-    // Randomize the order of the available words.
-    // The first element in the randomized array will be displayed on the host screen.
-    // The second element will be hidden in a list of decoys as the correct answer
-    var words = shuffle(wordPool[i].words);
+function getRoundData(roundIndex){
+    var roundData;
+    var roundTotal;
 
-    // Randomize the order of the decoy words and choose the first 5
-    var decoys = shuffle(wordPool[i].decoys).slice(0,5);
+    roundTotal = quiz.length;
 
-    // Pick a random spot in the decoy list to put the correct answer
-    var rnd = Math.floor(Math.random() * 5);
-    decoys.splice(rnd, 0, words[1]);
-
-    // Package the words into a single object.
-    var wordData = {
-        round: i,
-        word : words[0],   // Displayed Word
-        answer : words[1], // Correct Answer
-        list : decoys      // Word list for player (decoys and answer)
+    var roundData = {
+        roundIndex: roundIndex,
+        roundTotal: roundTotal,
+        quizItem: quiz[roundIndex]
     };
 
-    return wordData;
+    return roundData;
 }
-
-/*
- * Javascript implementation of Fisher-Yates shuffle algorithm
- * http://stackoverflow.com/questions/2450954/how-to-randomize-a-javascript-array
- */
-function shuffle(array) {
-    var currentIndex = array.length;
-    var temporaryValue;
-    var randomIndex;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-
-        // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-
-        // And swap it with the current element.
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-    }
-
-    return array;
-}
-
-var quiz = [];
-
-/**
- * Each element in the array provides data for a single round in the game.
- *
- * In each round, two random "words" are chosen as the host word and the correct answer.
- * Five random "decoys" are chosen to make up the list displayed to the player.
- * The correct answer is randomly inserted into the list of chosen decoys.
- *
- * @type {Array}
- */
-var wordPool = [
-    {
-        "words"  : [ "sale","seal","ales","leas" ],
-        "decoys" : [ "lead","lamp","seed","eels","lean","cels","lyse","sloe","tels","self" ]
-    },
-
-    {
-        "words"  : [ "item","time","mite","emit" ],
-        "decoys" : [ "neat","team","omit","tame","mate","idem","mile","lime","tire","exit" ]
-    },
-
-    {
-        "words"  : [ "spat","past","pats","taps" ],
-        "decoys" : [ "pots","laps","step","lets","pint","atop","tapa","rapt","swap","yaps" ]
-    },
-
-    {
-        "words"  : [ "nest","sent","nets","tens" ],
-        "decoys" : [ "tend","went","lent","teen","neat","ante","tone","newt","vent","elan" ]
-    },
-
-    {
-        "words"  : [ "pale","leap","plea","peal" ],
-        "decoys" : [ "sale","pail","play","lips","slip","pile","pleb","pled","help","lope" ]
-    },
-
-    {
-        "words"  : [ "races","cares","scare","acres" ],
-        "decoys" : [ "crass","scary","seeds","score","screw","cager","clear","recap","trace","cadre" ]
-    },
-
-    {
-        "words"  : [ "bowel","elbow","below","beowl" ],
-        "decoys" : [ "bowed","bower","robed","probe","roble","bowls","blows","brawl","bylaw","ebola" ]
-    },
-
-    {
-        "words"  : [ "dates","stead","sated","adset" ],
-        "decoys" : [ "seats","diety","seeds","today","sited","dotes","tides","duets","deist","diets" ]
-    },
-
-    {
-        "words"  : [ "spear","parse","reaps","pares" ],
-        "decoys" : [ "ramps","tarps","strep","spore","repos","peris","strap","perms","ropes","super" ]
-    },
-
-    {
-        "words"  : [ "stone","tones","steno","onset" ],
-        "decoys" : [ "snout","tongs","stent","tense","terns","santo","stony","toons","snort","stint" ]
-    }
-]

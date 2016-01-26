@@ -19,7 +19,8 @@
         <!-- This is where the templates defined below will be used -->
     </div>
 
-    <!-- Main Title Screen that appears when the page loads for the first time -->
+    <!-- Start screen  -->
+        <!-- Main Title Screen that appears when the page loads for the first time -->
     <script id="intro-screen-template" type="text/template">
 
         <div class="titleWrapper">
@@ -27,6 +28,8 @@
             <div class="title">
                 SHEBAM ! POW ! BLOP ! QUIZZ !
             </div>
+
+            <div>écran de démarrage</div>
 
             <div class="buttons">
 
@@ -39,9 +42,12 @@
 
     </script>
 
+    <!-- New room screen -->
     <!-- This screen appears when a user clicks "CREATE" on the Title Screen -->
-    <script id="create-game-template" type="text/template">
+    <script id="new-room-template" type="text/template">
         <div class="createGameWrapper">
+
+            <div>Ecran nouveau jeu</div>
 
             <div class="info">Open this site on your mobile device:</div>
             <div id="gameURL" class="infoBig">Error!</div>
@@ -49,12 +55,18 @@
             <div class="info">Then click <strong>JOIN</strong> and <br/> enter the following Game ID:</div>
             <div id="spanNewGameCode" class="gameId">Error!</div>
 
+            <div><button id="btnStartGame" class="btn">Start Quiz</button></div>
+
             <div id="playersWaiting"></div>
         </div>
     </script>
 
-    <!-- This scrreen appears when a player clicks "JOIN" on the Title Screen -->
+    <!-- New player screen -->
+    <!-- This screen appears when a player clicks "JOIN" on the Title Screen -->
     <script id="join-game-template" type="text/template">
+
+        <div id="debug-page">Ecran nouveau joueur avant le jeu</div>
+
         <div class="joinGameWrapper">
             <div class="info">
                 <label for="inputPlayerName">Your Name:</label>
@@ -67,26 +79,28 @@
             </div>
 
             <div class="info buttons">
-                <button id="btnStart" class="btn">Start</button>
+                <button id="btnStart" class="btn">Join</button>
                 <div id="playerWaitingMessage"></div>
             </div>
         </div>
     </script>
 
+    <!-- quizmaster quiz engine screen   -->
     <!-- This is the 'Host' screen. It displays the word for each player to match -->
-    <script id="host-game-template" type="text/template">
-        <div id="wordArea">
-            <div id="hostWord">5</div>
-        </div>
-        <div id="playerScores">
-            <div id="player1Score" class="playerScore">
-                <span class="score">0</span><span class="playerName">Player 1</span>
-            </div>
-            <div id="player2Score" class="playerScore">
-                <span class="playerName">Player 2</span><span class="score">0</span>
-            </div>
-        </div>
+    <script id="quizmaster-quiz-template" type="text/template">
+
+            <div class="template-title">quizmaster quiz engine template</div>
+
     </script>
+
+    <!-- player quiz engine screen   -->
+    <!-- This is the 'Host' screen. It displays the word for each player to match -->
+    <script id="player-quiz-template" type="text/template">
+
+            <div class="template-title">player quiz engine template</div>
+
+    </script>
+
 
     <!-- JavaScript Libraries -->
 
