@@ -21,7 +21,7 @@ jQuery(function($){
          * by the Socket.IO server, then run the appropriate function.
          */
         bindEvents : function() {
-            IO.socket.on('connected', IO.onConnected );
+            IO.socket.on('connected', IO.connected );
             IO.socket.on('newRoomOpened', IO.newRoomOpened );
             IO.socket.on('playerJoinedRoom', IO.playerJoinedRoom );
             IO.socket.on('newQuizStarted', IO.newQuizStarted);
@@ -29,6 +29,7 @@ jQuery(function($){
             IO.socket.on('hostCheckAnswer', IO.hostCheckAnswer);
             IO.socket.on('gameOver', IO.gameOver);
             IO.socket.on('error', IO.error );
+            IO.socket.on('timerTick', IO.timerTick);
             IO.socket.on('newGameCountdownStarted', IO.showNewGameCountdown);
             IO.socket.on('newGameCountdownTick', IO.showNewGameCountdown);
             IO.socket.on('newGameCountdownCompleted', IO.hideNewGameCountdown);
@@ -38,7 +39,7 @@ jQuery(function($){
         /**
          * The client is successfully connected!
          */
-        onConnected : function() {
+        connected : function() {
             // Cache a copy of the client's socket.IO session ID on the App
             App.mySocketId = IO.socket.socket.sessionid;
             // console.log('mySocketId:' + App.mySocketId);
@@ -49,8 +50,8 @@ jQuery(function($){
          * New room opened
          * @param data
          */
-        newRoomOpened : function(data) {
-            App.Host.installRoom(data);
+        newRoomOpened : function(roomId, socketId) {
+            App.Host.prepareRoom(roomId, socketId);
         },
 
         /**
@@ -71,9 +72,17 @@ jQuery(function($){
          * New quiz Started
          * @param data
          */
-        newQuizStarted : function(data) {
-            console.log('newQuizStarted:' + data.gameId);
-            App[App.myRole].newQuizStarted(data);
+        newQuizStarted : function(roomId, socketId) {
+            console.log('newQuizStarted:' + roomId);
+            App[App.myRole].newQuizStarted(roomId, socketId);
+        },
+
+        /**
+         * timer tick
+         * @param data
+         */
+        timerTick : function(sequenceName, totalLength, currentLength) {
+            App[App.myRole].timerTick(sequenceName, totalLength, currentLength);
         },
 
         /**
@@ -133,7 +142,7 @@ jQuery(function($){
          * of the Socket.IO Room used for the players and host to communicate
          *
          */
-        gameId: 0,
+        roomId: 0,
 
         /**
          * This is used to differentiate between 'Host' and 'Player' browsers.
@@ -162,8 +171,8 @@ jQuery(function($){
          */
         init: function () {
             App.cacheElements();
-            App.showInitScreen();
             App.bindEvents();
+            App.showIntroScreen();
 
             // Initialize the fastclick library
             FastClick.attach(document.body);
@@ -199,15 +208,10 @@ jQuery(function($){
             App.$doc.on('click', '#btnPlayerRestart', App.Player.onPlayerRestart);
         },
 
-        /* *************************************
-         *             Game Logic              *
-         * *********************************** */
-
         /**
-         * Show the initial Anagrammatix Title Screen
-         * (with Start and Join buttons)
+         * Show the intro Screen
          */
-        showInitScreen: function() {
+        showIntroScreen: function() {
             App.$gameArea.html(App.$templateIntroScreen);
             App.doTextFit('.title');
         },
@@ -255,13 +259,13 @@ jQuery(function($){
             },
 
             /**
-             * Install a new room
+             * Prepare a new room
              * @param data{{ gameId: int, mySocketId: * }}
              */
-            installRoom: function (data) {
+            prepareRoom: function (roomId, socketId) {
 
-                App.gameId = data.gameId;
-                App.mySocketId = data.mySocketId;
+                App.gameId = roomId;
+                App.mySocketId = socketId;
                 App.myRole = 'Host';
                 App.Host.numPlayersInRoom = 0;
                 App.Host.players = [];
@@ -329,32 +333,17 @@ jQuery(function($){
             /**
              * quizmaster : new quiz started
              */
-            newQuizStarted : function() {
+            newQuizStarted : function(roomId, socketId) {
 
-                // Prepare the game screen with new HTML
                 App.$gameArea.html(App.$quizmasterQuizTemplate);
+                $('#timer').html('10');
+            },
 
-                // console.log('fire new game countdown');
-                // IO.socket.emit('hostNewGameRequestCountdown', App.gameId);
-
-
-
-
-                // App.doTextFit('#hostWord');
-
-                // Display the players' names on screen
-                // $('#player1Score')
-                //     .find('.playerName')
-                //     .html(App.Host.players[0].playerName);
-
-                // $('#player2Score')
-                //     .find('.playerName')
-                //     .html(App.Host.players[1].playerName);
-
-                // // Set the Score section on screen to 0 for each player.
-                // $('#player1Score').find('.score').attr('id',App.Host.players[0].mySocketId);
-                // $('#player2Score').find('.score').attr('id',App.Host.players[1].mySocketId);
-
+            /**
+             * quizmaster : timer tick
+             */
+            timerTick : function(sequenceName, totalLength, currentLength) {
+                $('#timer').html(currentLength);
             },
 
             showNewGameCountdown: function() {},
@@ -575,10 +564,18 @@ jQuery(function($){
             /**
              * player : new quiz started
              */
-            newQuizStarted : function(hostData) {
-                App.Player.hostSocketId = hostData.mySocketId;
+            newQuizStarted : function(roomId, socketId) {
+                App.Player.hostSocketId = socketId;
 
                 App.$gameArea.html(App.$playerQuizTemplate);
+            },
+
+            /**
+             * player : timer tick
+             */
+            timerTick : function(sequenceName, totalLength, currentLength) {
+                $('#template-timer').html(currentLength);
+
             },
 
             showNewGameCountdown : function(data) {

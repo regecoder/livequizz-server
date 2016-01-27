@@ -1,46 +1,90 @@
 var io;
-var gameSocket;
+var currentSocket;
+
+var dataStore = {
+    currentRoomId: null
+};
 
 var scenario = [
     {
-        action: 'quizzStart',
+        name: 'startQuiz',
+        action: 'startQuiz',
         tempo: 10
     },
     {
-        action: 'questionStart',
-        tempo: 10
+        name: 'startQuestion',
+        action: 'startQuestion',
+        tempo: 0
     },
-    {
-        action: 'questionPreview',
-        tempo: 2
-    },
-    {
-        action: 'responseStart',
-        tempo: 4
-    }
+    // {
+    //     action: 'questionPreview',
+    //     tempo: 2
+    // },
+    // {
+    //     action: 'responseStart',
+    //     tempo: 4
+    // }
 ];
 
-var QuizEngine = function(quiz, scenario) {
+var QuizEngine = function(roomId, quiz, scenario) {
 
+    this.roomId = roomId;
     this.quiz = quiz;
     this.scenario = scenario;
 
+    //
+    // --------------------------------------------------------
+    //
+
     var start = function() {
-        console.log('quizzEngine start');
+        console.log('quizEngine start');
+
+        var mySequence;
+        var sequenceCount;
+        var sequenceIndex;
+        var that;
+        var startSequence;
+        var onTick;
+        var onComplete;
+
+        // problème this: à étudier
+        // http://www.sitepoint.com/mastering-javascripts-this-keyword/
+        sequenceIndex = 0;
+        sequenceCount = this.scenario.length
+        that = this;
+
+        startSequence = function(sequenceIndex) {
+            mySequence = that.scenario[sequenceIndex];
+            global[mySequence.action].call(that, that.roomId);
+            if (typeof mySequence.tempo === 'undefined' || mySequence.tempo > 0) {
+                return;
+            } else {
+                onTick = function(totalLength, currentLength) {
+                    io.sockets.in(that.roomId).emit('timerTick', mySequence.name, totalLength, currentLength);
+                };
+                sequenceIndex++;
+                if (sequenceIndex === sequenceCount - 1) {
+                    onComplete = function() {
+                        io.sockets.in(that.roomId).emit('timerComplete', mySequence.name);
+                    };
+                } else {
+                    onComplete = function() {
+                        io.sockets.in(that.roomId).emit('timerComplete', mySequence.name);
+                        startSequence(sequenceIndex);
+                    };
+                }
+                doTimer((mySequence.tempo * 1000), 5, onTick, onComplete, -1);
+            }
+        };
+        startSequence(sequenceIndex);
     };
+
+    //
+    // --------------------------------------------------------
+    //
 
     this.start = start;
 };
-
-
-    // newGame: {
-    //     name: 'newGame',
-    //     duration: 10
-    // },
-    // roundPreview: {
-    //     name: 'roundPreview',
-    //     duration: 2
-    // }
 
 var quiz = [];
 
@@ -90,10 +134,10 @@ var chrono = {
      data: undefined,
      callback: undefined,
      chronoConfigItem: undefined,
-     isStarting: false,
+     isRunning: false,
 
      start: function (gameId, chronoConfigItem, callback) {
-        if (this.isStarting) {
+        if (this.isRunning) {
             return;
         }
         console.log("start:" + chronoConfigItem.duration + '/' + chronoConfigItem.name);
@@ -109,7 +153,7 @@ var chrono = {
          //Démarrage du chrono
          console.log('setInterval' + this.timeLeft);
          this.timer = setInterval(this.tick.bind(this), 1000);
-         this.isStarting = true;
+         this.isRunning = true;
 
         io.sockets.in(this.gameId).emit(this.chronoConfigItem.name + 'CountdownStarted', this.data);
      },
@@ -130,7 +174,7 @@ var chrono = {
          console.log('stop chrono:' + this.timeLeft);
          //quand le temps est écoulé, on arrête le timer
         clearInterval(this.timer);
-        this.isStarting = false;
+        this.isRunning = false;
          //Et on appelle la fonction qui gère la fin du temps imparti et poursuit le traitement
          //Ici, pour le test, simplement une fonction alert
         if (this.callback && typeof(this.callback) === 'function') {
@@ -141,28 +185,82 @@ var chrono = {
  };
 
 
+// self-adjusting timer
+// http://www.sitepoint.com/creating-accurate-timers-in-javascript/
+//
+// length: durée en ms
+// resolution: nombre de pulsations par s
+// oninstance: callback sur la pulsation
+// oncomplete: callback à la fin
+//
+// displayBySeconde: 0: non, 1: oui chronomètre, -1 oui compte à rebours
+
+function doTimer(length, resolution, onTick, onComplete, displayBySeconde)
+{
+    var steps = (length / 100) * (resolution / 10),
+        speed = length / steps,
+        count = 0,
+        countBySeconde = 0,
+        lengthBySeconde = length / 1000,
+        start = new Date().getTime();
+
+    function instance()
+    {
+        var diff;
+
+        if (count++ == steps)
+        {
+            onComplete();
+        }
+        else
+        {
+            if (displayBySeconde !== 0) {
+                onTick(steps, count);
+            } else {
+                diff = parseInt((new Date().getTime() - start) / 1000, 10);
+                if (diff > countBySeconde) {
+                    countBySeconde = diff;
+                    if (displayBySeconde === -1) {
+                        diff = (lengthBySeconde) - diff;
+                    }
+                    onTick(lengthBySeconde, diff);
+                }
+            }
+
+            diff = (new Date().getTime() - start) - (count * speed);
+            setTimeout(instance, (speed - diff));
+        }
+    }
+
+    setTimeout(instance, speed);
+}
+
+
+
 
 /**
- * This function is called by index.js to initialize a new game instance.
+ * This function is called by index.js to initialize a new server app instance.
  *
  * @param sio The Socket.IO library
  * @param socket The socket object for the connected client.
  */
-exports.initGame = function(sio, socket){
+exports.initServerApp = function(sio, socket){
+
     io = sio;
-    gameSocket = socket;
-    gameSocket.emit('connected', { message: "You are connected!" });
+    currentSocket = socket;
+
+    currentSocket.emit('connected');
 
     // Host Events
-    gameSocket.on('openRoomRequested', openNewRoom);
-    gameSocket.on('startQuizRequested', startQuiz);
-    // gameSocket.on('hostNewGameRequestCountdown', hostManageNewGameCountdown);
-    gameSocket.on('hostNextRound', hostNextRound);
+    currentSocket.on('openRoomRequested', openNewRoom);
+    currentSocket.on('startQuizRequested', startQuizEngine);
+    // currentSocket.on('hostNewGameRequestCountdown', hostManageNewGameCountdown);
+    currentSocket.on('hostNextRound', hostNextRound);
 
     // Player Events
-    gameSocket.on('playerJoinGame', playerJoinGame);
-    gameSocket.on('playerAnswer', playerAnswer);
-    gameSocket.on('playerRestart', playerRestart);
+    currentSocket.on('playerJoinGame', playerJoinGame);
+    currentSocket.on('playerAnswer', playerAnswer);
+    currentSocket.on('playerRestart', playerRestart);
 }
 
 
@@ -176,43 +274,60 @@ exports.initGame = function(sio, socket){
  * Open an new room
  */
 function openNewRoom() {
-    // Create a unique Socket.IO Room
-    var thisGameId = ( Math.random() * 100000 ) | 0;
 
-    // Return the Room ID (gameId) and the socket ID (mySocketId) to the browser client
-    this.emit('newRoomOpened', {gameId: thisGameId, mySocketId: this.id});
+    var newRoomId;
+    var mySocketId;
+    var data;
+    var socketId;
+
+    // Create a unique Socket.IO Room
+    newRoomId = ( Math.random() * 100000 ) | 0;
+    dataStore.currentRoomId = newRoomId;
 
     // Join the Room and wait for the players
-    this.join(thisGameId.toString());
+    this.join(newRoomId.toString());
+
+    socketId = this.id;
+
+    console.log('openNewRoom:' + newRoomId)
+
+    // Return the Room ID (gameId) and the socket ID (mySocketId) to the browser client
+    this.emit('newRoomOpened', newRoomId, socketId);
 };
 
 /*
- * Start quiz
- * @param gameId
+ * Start quiz engine
+ * @param roomId
  */
-function startQuiz(gameId) {
-    console.log('startQuiz' + gameId);
+function startQuizEngine(roomId) {
+    console.log('startQuizEngine' + roomId);
 
-    // Start the quiz
-    var sock = this;
-    var data = {
-        mySocketId : sock.id,
-        gameId : gameId
-    };
-
-    var quizEngine = new QuizEngine(quiz, scenario);
+    var quizEngine = new QuizEngine(roomId, quiz, scenario);
     quizEngine.start();
-
-    io.sockets.in(data.gameId).emit('newQuizStarted', data);
 }
 
 /*
- * The Countdown has finished, and the game begins!
- * @param gameId The game ID / room ID
+ * Start quiz
+ * @param roomId
  */
-function hostStartGame(gameId) {
-    console.log('Game Started:' + gameId);
-    startNewRound(0, gameId);
+global.startQuiz = function(roomId) {
+    console.log('startQuiz' + roomId);
+
+    var socketId;
+
+    // Start the quiz
+    socketId = this.id;
+
+    io.sockets.in(roomId).emit('newQuizStarted', roomId, socketId);
+}
+
+/*
+ * Start question
+ * @param roomId
+ */
+global.startQuestion = function(roomId) {
+    console.log('startQuestion' + roomId);
+    startNewRound(0, roomId);
 };
 
 
@@ -265,7 +380,7 @@ function playerJoinGame(data) {
     console.log('Player ' + data.playerName + ' joining game: ' + data.gameId + ' with socketId: ' + sock.id );
 
     // Look up the room ID in the Socket.IO manager object.
-    var room = gameSocket.manager.rooms["/" + data.gameId];
+    var room = currentSocket.manager.rooms["/" + data.gameId];
 
     // If the room exists...
     if( room != undefined ){
