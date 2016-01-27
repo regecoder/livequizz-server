@@ -55,24 +55,30 @@ var QuizEngine = function(roomId, quiz, scenario) {
 
         startSequence = function(sequenceIndex) {
             mySequence = that.scenario[sequenceIndex];
+            console.log('QuizEngine call:' + mySequence.action);
             global[mySequence.action].call(that, that.roomId);
-            if (typeof mySequence.tempo === 'undefined' || mySequence.tempo > 0) {
+            if (typeof mySequence.tempo === 'undefined' || mySequence.tempo === 0) {
+                console.log('QuizEngine tempo return');
                 return;
             } else {
                 onTick = function(totalLength, currentLength) {
                     io.sockets.in(that.roomId).emit('timerTick', mySequence.name, totalLength, currentLength);
                 };
                 sequenceIndex++;
-                if (sequenceIndex === sequenceCount - 1) {
+                console.log('Engine startSequence:' + sequenceIndex + '/' + sequenceCount);
+                if (sequenceIndex === sequenceCount) {
+                    console.log('Engine oncomplete sans:' + sequenceIndex + '/' + sequenceCount);
                     onComplete = function() {
                         io.sockets.in(that.roomId).emit('timerComplete', mySequence.name);
                     };
                 } else {
+                    console.log('Engine oncomplete avec:' + sequenceIndex + '/' + sequenceCount);
                     onComplete = function() {
                         io.sockets.in(that.roomId).emit('timerComplete', mySequence.name);
                         startSequence(sequenceIndex);
                     };
                 }
+                console.log('QuizEngine start timer:' + mySequence.tempo);
                 doTimer((mySequence.tempo * 1000), 5, onTick, onComplete, -1);
             }
         };
@@ -197,6 +203,9 @@ var chrono = {
 
 function doTimer(length, resolution, onTick, onComplete, displayBySeconde)
 {
+    console.log('doTimer start');
+    console.log(onComplete.toString());
+
     var steps = (length / 100) * (resolution / 10),
         speed = length / steps,
         count = 0,
@@ -208,13 +217,16 @@ function doTimer(length, resolution, onTick, onComplete, displayBySeconde)
     {
         var diff;
 
-        if (count++ == steps)
+        count++;
+        if (count === steps)
         {
+            console.log('doTimer complete');
             onComplete();
+            return;
         }
         else
         {
-            if (displayBySeconde !== 0) {
+            if (displayBySeconde === 0) {
                 onTick(steps, count);
             } else {
                 diff = parseInt((new Date().getTime() - start) / 1000, 10);

@@ -334,16 +334,16 @@ jQuery(function($){
              * quizmaster : new quiz started
              */
             newQuizStarted : function(roomId, socketId) {
-
+                console.log('newQuizStarted template');
                 App.$gameArea.html(App.$quizmasterQuizTemplate);
-                $('#timer').html('10');
+                $('#template-timer').html('10');
             },
 
             /**
              * quizmaster : timer tick
              */
             timerTick : function(sequenceName, totalLength, currentLength) {
-                $('#timer').html(currentLength);
+                $('#template-timer').html(currentLength);
             },
 
             showNewGameCountdown: function() {},
