@@ -22,36 +22,50 @@ jQuery(function($){
          */
         bindEvents : function() {
             IO.socket.on('connected', IO.connected );
-            IO.socket.on('newRoomOpened', IO.newRoomOpened );
+            IO.socket.on('userNearRoomsSetted', IO.userNearRoomsSetted );
+            IO.socket.on('userPseudoValidated', IO.userPseudoValidated );
+
+            IO.socket.on('roomCreated', IO.roomCreated );
             IO.socket.on('playerJoinedRoom', IO.playerJoinedRoom );
-            IO.socket.on('newQuizStarted', IO.newQuizStarted);
+            IO.socket.on('quizStarted', IO.quizStarted);
+            IO.socket.on('questionStarted', IO.questionStarted);
+            IO.socket.on('responseStarted', IO.responseStarted);
             IO.socket.on('startNewRound', IO.startNewRound);
             IO.socket.on('hostCheckAnswer', IO.hostCheckAnswer);
             IO.socket.on('gameOver', IO.gameOver);
             IO.socket.on('error', IO.error );
             IO.socket.on('timerTick', IO.timerTick);
-            IO.socket.on('newGameCountdownStarted', IO.showNewGameCountdown);
-            IO.socket.on('newGameCountdownTick', IO.showNewGameCountdown);
-            IO.socket.on('newGameCountdownCompleted', IO.hideNewGameCountdown);
-            IO.socket.on('roundPreviewCompleted', IO.roundPreviewCompleted);
         },
 
         /**
          * The client is successfully connected!
          */
         connected : function() {
-            // Cache a copy of the client's socket.IO session ID on the App
-            App.mySocketId = IO.socket.socket.sessionid;
-            // console.log('mySocketId:' + App.mySocketId);
-            // console.log(data.message);
+            // console.log('connected socketId:' + IO.socket.socket.sessionid)
+            App.getUserPosition();
+        },
+
+        userNearRoomsSetted: function(userNearRooms) {
+            console.log('userNearRoomsSetted:' + userNearRooms.length);
+            var myContainer = $('#nearRooms');
+            for (var i = 0; i < userNearRooms.length; i++) {
+                myContainer.append('<div>' + userNearRooms[i].id + '/' + userNearRooms[i].distance + '</div>');
+            }
+        },
+
+        userPseudoValidated: function(data) {
+            console.log('userPseudoValidated:' + data.userPseudo);
+            App.user.pseudo = data.userPseudo
+            App.displaySelectRoomScreen(data);
         },
 
         /**
          * New room opened
          * @param data
          */
-        newRoomOpened : function(roomId, socketId) {
-            App.Host.prepareRoom(roomId, socketId);
+        roomCreated : function(roomId) {
+            // console.log('roomCreated:' + IO.socket.socket.sessionid);
+            App.Host.prepareRoom(roomId);
         },
 
         /**
@@ -59,22 +73,33 @@ jQuery(function($){
          * @param data {{playerName: string, gameId: int, mySocketId: int}}
          */
         playerJoinedRoom : function(data) {
+            // console.log('connected playerJoinedRoom:' + IO.socket.socket.sessionid)
             // When a player joins a room, do the updateWaitingScreen funciton.
             // There are two versions of this function: one for the 'host' and
             // another for the 'player'.
             //
             // So on the 'host' browser window, the App.Host.updateWiatingScreen function is called.
             // And on the player's browser, App.Player.updateWaitingScreen is called.
-            App[App.myRole].playerJoinedRoom(data);
+            App[App.userRole].playerJoinedRoom(data);
         },
 
         /**
          * New quiz Started
          * @param data
          */
-        newQuizStarted : function(roomId, socketId) {
-            console.log('newQuizStarted:' + roomId);
-            App[App.myRole].newQuizStarted(roomId, socketId);
+        quizStarted : function(roomId) {
+            console.log('quizStarted:' + roomId);
+            App[App.userRole].quizStarted(roomId);
+        },
+
+        questionStarted : function(roomId, sceneId) {
+            console.log('questionStarted:' + roomId + '/' + sceneId);
+            App[App.userRole].questionStarted(roomId, sceneId);
+        },
+
+        responseStarted : function(roomId, sceneId) {
+            console.log('responseStarted:' + roomId + '/' + sceneId);
+            App[App.userRole].responseStarted(roomId, sceneId);
         },
 
         /**
@@ -82,7 +107,7 @@ jQuery(function($){
          * @param data
          */
         timerTick : function(sequenceName, totalLength, currentLength) {
-            App[App.myRole].timerTick(sequenceName, totalLength, currentLength);
+            App[App.userRole].timerTick(sequenceName, totalLength, currentLength);
         },
 
         /**
@@ -94,11 +119,11 @@ jQuery(function($){
             App.currentRound = data.roundId;
 
             // Change the word for the Host and Player
-            App[App.myRole].startNewRound(data);
+            App[App.userRole].startNewRound(data);
         },
 
         roundPreviewCompleted: function(gameId) {
-            App[App.myRole].roundPreviewCompleted(gameId);
+            App[App.userRole].roundPreviewCompleted(gameId);
         },
 
         /**
@@ -106,7 +131,7 @@ jQuery(function($){
          * @param data
          */
         hostCheckAnswer : function(data) {
-            if(App.myRole === 'Host') {
+            if(App.userRole === 'Host') {
                 App.Host.checkAnswer(data);
             }
         },
@@ -116,7 +141,7 @@ jQuery(function($){
          * @param data
          */
         gameOver : function(data) {
-            App[App.myRole].endGame(data);
+            App[App.userRole].endGame(data);
         },
 
         /**
@@ -125,17 +150,15 @@ jQuery(function($){
          */
         error : function(data) {
             alert(data.message);
-        },
-
-        showNewGameCountdown : function(data) {
-            App[App.myRole].showNewGameCountdown(data);
-        },
-
-        hideNewGameCountdown : function() {}
-
+        }
     };
 
     var App = {
+
+        user: {
+            pseudo: null
+        },
+
 
         /**
          * Keep track of the gameId, which is identical to the ID
@@ -147,14 +170,14 @@ jQuery(function($){
         /**
          * This is used to differentiate between 'Host' and 'Player' browsers.
          */
-        myRole: '',   // 'Player' or 'Host'
+        userRole: '',   // 'Player' or 'Host'
 
         /**
          * The Socket.IO socket object identifier. This is unique for
          * each player and host. It is generated when the browser initially
          * connects to the server when the page loads for the first time.
          */
-        mySocketId: '',
+        // mySocketId: '',
 
         /**
          * Identifies the current round. Starts at 0 because it corresponds
@@ -172,10 +195,15 @@ jQuery(function($){
         init: function () {
             App.cacheElements();
             App.bindEvents();
-            App.showIntroScreen();
+            App.displayStartScreen();
+            // App.showIntroScreen();
 
             // Initialize the fastclick library
             FastClick.attach(document.body);
+        },
+
+        getSocketId: function() {
+            return IO.socket.socket.sessionid;
         },
 
         /**
@@ -185,11 +213,19 @@ jQuery(function($){
             App.$doc = $(document);
 
             // Templates
+            App.$screen = $('#screen');
+            App.$startTemplate = 'start';
+            App.$selectRoomTemplate = 'select_room';
+
             App.$gameArea = $('#gameArea');
             App.$templateIntroScreen = $('#intro-screen-template').html();
-            App.$newRoomTemplate = $('#new-room-template').html();
+            App.$roomTemplate = $('#room-template').html();
             App.$templateJoinGame = $('#join-game-template').html();
             App.$quizmasterQuizTemplate = $('#quizmaster-quiz-template').html();
+            App.$quizmasterQuestionTemplate = $('#quizmaster-question-template').html();
+            App.$quizmasterResponseTemplate = $('#quizmaster-response-template').html();
+            App.$playerQuestionTemplate = $('#player-question-template').html();
+            App.$playerResponseTemplate = $('#player-response-template').html();
             App.$playerQuizTemplate = $('#player-quiz-template').html();
         },
 
@@ -197,8 +233,13 @@ jQuery(function($){
          * Create some click handlers for the various buttons that appear on-screen.
          */
         bindEvents: function () {
+
+            // Start screen
+            App.$doc.on('click', '#pseudo-submit-button', App.submitPseudo);
+
+
             // Host
-            App.$doc.on('click', '#btnCreateGame', App.Host.requestOpenRoom);
+            App.$doc.on('click', '#btnCreateGame', App.Host.requestCreateRoom);
             App.$doc.on('click', '#btnStartGame',App.Host.requestStartQuiz);
 
             // Player
@@ -206,12 +247,132 @@ jQuery(function($){
             App.$doc.on('click', '#btnStart',App.Player.onPlayerStartClick);
             App.$doc.on('click', '.btnAnswer',App.Player.onPlayerAnswerClick);
             App.$doc.on('click', '#btnPlayerRestart', App.Player.onPlayerRestart);
+            App.$doc.on('click', '#btnStartQuizz',App.Host.requestStartQuiz);
+        },
+
+        submitPseudo: function() {
+            console.log('submitPseudo');
+
+            var data = {
+                userPseudo : $('#pseudo').val()
+            };
+
+            IO.socket.emit('userPseudoSubmitted', data);
+        },
+
+        /**
+         * Geolocation
+         */
+
+         getUserPosition: function() {
+
+            var options;
+
+            if (navigator.geolocation) {
+                options = {desiredAccuracy: 20, maxWait: 5000};
+                navigator.geolocation.getAccurateCurrentPosition(positionSuccess, positionError, positionProgress, options);
+            }
+
+            function sendPosition(position) {
+
+                var myPosition;
+
+                myPosition = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+
+                $('#map').text('Position:' + myPosition.latitude + '/' + myPosition.longitude + '/' + myPosition.accuracy);
+
+                IO.socket.emit('userPositionGetted', myPosition);
+            }
+
+            function positionSuccess(position) {
+                sendPosition(position);
+            }
+
+            function positionError(error) {
+                var errors = {
+                    1: "Authorization fails", // permission denied
+                    2: "Can\'t detect your location", //position unavailable
+                    3: "Connection timeout" // timeout
+                };
+            }
+
+            function positionProgress(position) {
+                sendPosition(position);
+            }
+        },
+
+        getScreen: function (templateName, context) {
+
+            var template;
+            var header;
+
+            template = getTemplate(templateName);
+            header = getTemplate('header', true);
+            // console.log('header:' + header);
+            Handlebars.registerPartial('header', header);
+
+            return template(context);
+
+            function getTemplate(templateName, isPartial) {
+                // console.log('getTemplate:' + templateName + '/' + isPartial);
+
+                isPartial = isPartial || false;
+
+                if (Handlebars.templates === undefined || Handlebars.templates[templateName] === undefined) {
+                    $.ajax({
+                        url: 'templates/' + templateName + '.hbs',
+                        async: false,
+                        success: function(data) {
+                            if (Handlebars.templates === undefined) {
+                                Handlebars.templates = {};
+                            }
+                            if (isPartial === false) {
+                                Handlebars.templates[templateName] = Handlebars.compile(data);
+                            } else {
+                                Handlebars.templates[templateName] = data;
+                            }
+                        }
+                    });
+                }
+                return Handlebars.templates[templateName];
+            }
+        },
+
+        renderTemplate: function(html) {
+            // console.log('renderTemplate' + html);
+            App.$screen.html(html);
+        },
+
+        displayStartScreen: function() {
+
+            var html;
+
+            html = App.getScreen(App.$startTemplate, {title: "Live quizz"});
+            App.renderTemplate(html);
+        },
+
+        displaySelectRoomScreen: function(data) {
+
+            var html;
+            var screenData;
+
+            screenData = {
+                userPseudo: App.user.pseudo
+            };
+
+            html = App.getScreen(App.$selectRoomTemplate, screenData);
+            App.renderTemplate(html);
         },
 
         /**
          * Show the intro Screen
          */
         showIntroScreen: function() {
+
             App.$gameArea.html(App.$templateIntroScreen);
             App.doTextFit('.title');
         },
@@ -247,9 +408,10 @@ jQuery(function($){
             /**
              * Handler for the "Start" button on the Title Screen.
              */
-            requestOpenRoom: function () {
+            requestCreateRoom: function () {
+
                 // console.log('Clicked "Create A Game"');
-                IO.socket.emit('openRoomRequested');
+                IO.socket.emit('createRoomRequested');
             },
 
             requestStartQuiz: function () {
@@ -262,16 +424,16 @@ jQuery(function($){
              * Prepare a new room
              * @param data{{ gameId: int, mySocketId: * }}
              */
-            prepareRoom: function (roomId, socketId) {
+            prepareRoom: function (roomId) {
 
                 App.gameId = roomId;
-                App.mySocketId = socketId;
-                App.myRole = 'Host';
+                // App.mySocketId = App.getSocketId();
+                App.userRole = 'Host';
                 App.Host.numPlayersInRoom = 0;
                 App.Host.players = [];
-                App.Player.myName = 'admin';
+                App.Player.pseudo = 'admin';
 
-                App.Host.displayNewRoomScreen();
+                App.Host.displayRoomScreen();
 
                 // console.log("Game started with ID: " + App.gameId + ' by host: ' + App.mySocketId);
             },
@@ -279,9 +441,9 @@ jQuery(function($){
             /**
              * Show the Host screen containing the game URL and unique game ID
              */
-            displayNewRoomScreen : function() {
+            displayRoomScreen : function() {
                 // Fill the game screen with the appropriate HTML
-                App.$gameArea.html(App.$newRoomTemplate);
+                App.$gameArea.html(App.$roomTemplate);
 
                 // Display the URL on screen
                 $('#gameURL').text(window.location.href);
@@ -296,19 +458,22 @@ jQuery(function($){
              * @param data{{playerName: string}}
              */
             playerJoinedRoom: function(data) {
+
                 var i;
-                var playersLength;
+                var playersCount;
+                var socketId;
 
                 // console.log(data);
                 // If this is a restarted game, show the screen.
                 if ( App.Host.isNewGame ) {
-                    App.Host.displayNewRoomScreen();
+                    App.Host.displayRoomScreen();
                 }
 
-                playersLength = App.Host.players.length;
-                for (i = 0; i < playersLength; i++) {
+                socketId = App.getSocketId();
+                playersCount = App.Host.players.length;
+                for (i = 0; i < playersCount; i++) {
                     // console.log('data.mySocketId' + data.mySocketId + '/' + App.Host.players[i].mySocketId)
-                    if (data.mySocketId == App.Host.players[i].mySocketId) {
+                    if (socketId == App.Host.players[i].socketId) {
                         return;
                     };
                 };
@@ -316,28 +481,38 @@ jQuery(function($){
                 App.Host.players.push(data);
                 App.Host.numPlayersInRoom += 1;
 
-                // Update host screen
-                $('#playersWaiting')
-                    .append('<p/>')
-                    .text('Player ' + data.playerName + ' joined the game.');
+                App.$gameArea.html(App.$templateJoinGame);
+                $('#template-timer').html('10');
 
-                // // If two players have joined, start the game!
-                // if (App.Host.numPlayersInRoom === 2) {
-                //     // console.log('Room is full. Almost ready!');
+                $('#debug-page').html('Player ' + data.playerName + ' joined the game.');
 
-                //     // Let the server know that two players are present.
-                //     IO.socket.emit('hostRoomFull',App.gameId);
-                // }
             },
 
             /**
              * quizmaster : new quiz started
              */
-            newQuizStarted : function(roomId, socketId) {
-                console.log('newQuizStarted template');
+            quizStarted : function(roomId) {
+                // console.log('quizStarted template');
                 App.$gameArea.html(App.$quizmasterQuizTemplate);
                 $('#template-timer').html('10');
             },
+
+            questionStarted : function(roomId, sceneId) {
+                console.log('questionStarted:' + roomId + '/' + sceneId);
+                App.$gameArea.html(App.$quizmasterQuestionTemplate);
+                $('#template-timer').html('10');
+            },
+
+            responseStarted : function(roomId, sceneId) {
+                console.log('responseStarted:' + roomId + '/' + sceneId);
+                App.$gameArea.html(App.$quizmasterResponseTemplate);
+                $('#template-timer').html('10');
+            },
+
+
+
+
+
 
             /**
              * quizmaster : timer tick
@@ -345,8 +520,6 @@ jQuery(function($){
             timerTick : function(sequenceName, totalLength, currentLength) {
                 $('#template-timer').html(currentLength);
             },
-
-            showNewGameCountdown: function() {},
 
             /**
              * Show the word for the current round on screen.
@@ -374,9 +547,9 @@ jQuery(function($){
                 $('#gameArea').append($roundInfo);
 
                 var $players = $('<ul/>').attr('id','players');
-                console.log('App.Host.players:' + App.Host.players)
+                // console.log('App.Host.players:' + App.Host.players)
                 $.each(App.Host.players, function(index, player){
-                    $players.append($('<li/>').html(index + '/' + player.playerName + '/' + player.mySocketId));
+                    $players.append($('<li/>').html(index + '/' + player.playerName + '/' + player.socketId));
                 });
                 $('#gameArea').append($players);
             },
@@ -458,7 +631,7 @@ jQuery(function($){
              * A player hit the 'Start Again' button after the end of a game.
              */
             restartGame : function() {
-                App.$gameArea.html(App.$newRoomTemplate);
+                App.$gameArea.html(App.$roomTemplate);
                 $('#spanNewGameCode').text(App.gameId);
             }
         },
@@ -478,7 +651,7 @@ jQuery(function($){
             /**
              * The player's name entered on the 'Join' screen.
              */
-            myName: '',
+            pseudo: '',
 
             /**
              * Click handler for the 'JOIN' button
@@ -507,8 +680,8 @@ jQuery(function($){
                 IO.socket.emit('playerJoinGame', data);
 
                 // Set the appropriate properties for the current player.
-                App.myRole = 'Player';
-                App.Player.myName = data.playerName;
+                App.userRole = 'Player';
+                App.Player.pseudo = data.playerName;
             },
 
             /**
@@ -523,7 +696,7 @@ jQuery(function($){
                 // the host can check the answer.
                 var data = {
                     gameId: App.gameId,
-                    playerId: App.mySocketId,
+                    playerId: App.getSocketId(),
                     answer: answer,
                     round: App.currentRound
                 }
@@ -537,7 +710,7 @@ jQuery(function($){
             onPlayerRestart : function() {
                 var data = {
                     gameId : App.gameId,
-                    playerName : App.Player.myName
+                    playerName : App.Player.pseudo
                 }
                 IO.socket.emit('playerRestart',data);
                 App.currentRound = 0;
@@ -549,26 +722,41 @@ jQuery(function($){
              * @param data
              */
             playerJoinedRoom : function(data) {
-                if(IO.socket.socket.sessionid === data.mySocketId){
-                    App.myRole = 'Player';
+                // if(App.getSocketId() === data.mySocketId){
+                    App.userRole = 'Player';
                     App.gameId = data.gameId;
 
-                    $('#debug-page').html("Ecran d'attente avant le démarrage du jeu");
+                App.$gameArea.html(App.$templateJoinGame);
+                $('#template-timer').html('10');
 
-                    $('#playerWaitingMessage')
-                        .append('<p/>')
-                        .text('Joined Game ' + data.gameId + '. Please wait for game to begin.');
-                }
+                    $('#debug-page').html('Joined Game ' + data.gameId + '/' + 'En attente de démarrage du quizz');
+                // }
             },
 
             /**
              * player : new quiz started
              */
-            newQuizStarted : function(roomId, socketId) {
-                App.Player.hostSocketId = socketId;
-
+            quizStarted : function(roomId) {
+                console.log('quizStarted:' + roomId);
                 App.$gameArea.html(App.$playerQuizTemplate);
+                $('#template-timer').html('10');
             },
+
+            questionStarted : function(roomId, sceneId) {
+                console.log('questionStarted:' + roomId + '/' + sceneId);
+                App.$gameArea.html(App.$playerQuestionTemplate);
+                $('#template-timer').html('10');
+            },
+
+            responseStarted : function(roomId, sceneId) {
+                console.log('responseStarted:' + roomId + '/' + sceneId);
+                App.$gameArea.html(App.$playerResponseTemplate);
+                $('#template-timer').html('10');
+            },
+
+
+
+
 
             /**
              * player : timer tick
@@ -576,13 +764,6 @@ jQuery(function($){
             timerTick : function(sequenceName, totalLength, currentLength) {
                 $('#template-timer').html(currentLength);
 
-            },
-
-            showNewGameCountdown : function(data) {
-                console.log('timeleft:' + data.timeLeft);
-
-                $('#gameArea')
-                    .html('<div class="gameOver">Attente avant démarrage du quiz</div><div style="font-size: 20em; text-align: center;">' + data.timeLeft + '/' + data.duration + '</div>');
             },
 
             /**

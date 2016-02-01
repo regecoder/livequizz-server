@@ -1,0 +1,27 @@
+/*@font-face {
+    font-family: roboto;
+    src: url('lib/bower_components/Materialize/dist/font/roboto/Roboto-Regular.otf');
+}
+@font-face {
+    font-family: roboto;
+    font-weight: bold;
+    src: url('lib/bower_components/Materialize/dist/font/roboto/Roboto-Bold.otf');
+}
+*/
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.4;
+    font-family: 'roboto', Helvetica, Arial, sans-serif;
+}
+
+.icon-block {
+  padding: 0 15px;
+}
+.icon-block .material-icons {
+    font-size: inherit;
+}

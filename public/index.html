@@ -1,130 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <title>Starter Template - Materialize</title>
 
-    <!-- Ensure that everything scales appropriately on a mobile device -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-
-    <!-- Let's borrow a cool looking Font from Google -->
-    <link href='https://fonts.googleapis.com/css?family=Quicksand:300,400,700' rel='stylesheet' type='text/css'>
-
-    <link href="css/styles.css" rel="stylesheet">
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="lib/bower_components/Materialize/dist/css/materialize.min.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="styles/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
 </head>
-
 <body>
 
+    <div id="screen"></div>
 
-    <div id="gameArea">
-        <!-- This is where the templates defined below will be used -->
-    </div>
-
-    <!-- Start screen  -->
-        <!-- Main Title Screen that appears when the page loads for the first time -->
-    <script id="intro-screen-template" type="text/template">
-
-        <div class="titleWrapper">
-
-            <div class="title">
-                SHEBAM ! POW ! BLOP ! QUIZZ !
-            </div>
-
-            <div>écran de démarrage</div>
-
-            <div class="buttons">
-
-                <button id="btnCreateGame" class="btn left">CREATE</button>
-                <button id="btnJoinGame" class="btn right">JOIN</button>
-                <div style="clear:both"></div>
-            </div>
-
-        </div>
-
-    </script>
-
-    <!-- New room screen -->
-    <!-- This screen appears when a user clicks "CREATE" on the Title Screen -->
-    <script id="new-room-template" type="text/template">
-
-        <div class="createGameWrapper">
-
-            <div>New room screen</div>
-
-            <div class="info">Open this site on your mobile device:</div>
-            <div id="gameURL" class="infoBig">Error!</div>
-
-            <div class="info">Then click <strong>JOIN</strong> and <br/> enter the following Game ID:</div>
-            <div id="spanNewGameCode" class="gameId">Error!</div>
-
-            <div><button id="btnStartGame" class="btn">Start Quiz</button></div>
-
-            <div id="playersWaiting"></div>
-        </div>
-    </script>
-
-    <!-- New player screen -->
-    <!-- This screen appears when a player clicks "JOIN" on the Title Screen -->
-    <script id="join-game-template" type="text/template">
-
-        <div id="debug-page">Ecran nouveau joueur avant le jeu</div>
-
-        <div class="joinGameWrapper">
-            <div class="info">
-                <label for="inputPlayerName">Your Name:</label>
-                <input id="inputPlayerName" type="text" />
-            </div>
-
-            <div class="info">
-                <label for="inputGameId">Game ID:</label>
-                <input id="inputGameId" type="text"/>
-            </div>
-
-            <div class="info buttons">
-                <button id="btnStart" class="btn">Join</button>
-                <div id="playerWaitingMessage"></div>
-            </div>
-        </div>
-    </script>
-
-    <!-- quizmaster quiz engine screen   -->
-    <!-- This is the 'Host' screen. It displays the word for each player to match -->
-    <script id="quizmaster-quiz-template" type="text/template">
-
-            <div class="template-title">quizmaster quiz engine template</div>
-            <div id="template-timer"></div>
-
-    </script>
-
-    <!-- player quiz engine screen   -->
-    <!-- This is the 'Host' screen. It displays the word for each player to match -->
-    <script id="player-quiz-template" type="text/template">
-
-            <div class="template-title">player quiz engine template</div>
-            <div id="template-timer"></div>
-
-    </script>
-
-
-    <!-- JavaScript Libraries -->
-
-    <!-- jQuery! -->
-    <script src="libs/jquery-2.0.2.min.js"></script>
-
-    <!-- TextFit resizes text to fill a container.
-        It's used so the titles and game words fit properly on any size screen.
-        https://github.com/STRML/textFit   -->
-    <script src="libs/textFit.min.js"></script>
-
-    <!-- FastClick is used to eliminate the 300ms delay when clicking items on a mobile device
-        https://github.com/ftlabs/fastclick -->
-    <script src="libs/fastclick.js"></script>
-
-    <!-- If Socket.IO is used with Express, then the /socket.io/ path will
-        serve the proper Socket.IO javascript files used by the browser -->
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- app.js is where all the client-side Anagrammatix game logic -->
+    <script src="lib/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="lib/bower_components/handlebars/handlebars.min.js"></script>
+    <script src="lib/bower_components/Materialize/dist/js/materialize.min.js"></script>
+    <script src="lib/fastclick.js"></script>
+    <script src="lib/geolocation.js"></script>
     <script src="app.js"></script>
 
-</body>
+  </body>
 </html>

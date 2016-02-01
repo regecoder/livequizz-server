@@ -7,8 +7,8 @@ var path = require('path');
 // Create a new instance of Express
 var app = express();
 
-// Import the live squizz file.
-var myServerApp = require('./server_app');
+// Import the livequiz file.
+var myApp = require('./livequizz');
 
 // Create a simple Express application
 app.configure(function() {
@@ -30,6 +30,7 @@ io.set('log level', 1);
 
 // Listen for Socket.IO Connections. Once connected, start the game logic.
 io.sockets.on('connection', function(socket) {
-    console.log('client connected');
-    myServerApp.initServerApp(io, socket);
+    // console.log('server client connected');
+    // console.log(socket.id);
+    myApp.initApp(io, socket);
 });

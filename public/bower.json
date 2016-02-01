@@ -1,0 +1,14 @@
+{
+  "name": "livequizz client",
+  "authors": [
+    "regecoder <regecoder@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "homepage": "",
+  "dependencies": {
+    "handlebars": "~4.0.5"
+  }
+}
