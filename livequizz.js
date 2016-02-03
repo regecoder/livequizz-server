@@ -9,7 +9,7 @@ var socket;
 
 var quiz = [];
 
-(function() {[]
+(function() {
     var quizItem;
     var str;
     var i;
@@ -44,7 +44,7 @@ var quiz = [];
             }
         };
         quiz.push(quizItem);
-    };
+    }
 })();
 
 var scenario = [
@@ -103,27 +103,27 @@ var User = function(socketId, pseudo) {
         nearRooms.sort(function(a, b) {
                 return a.distance - b.distance;
         });
-    }
+    };
 
     this.nearRoomsCount = function() {
 
         return nearRooms.length;
-    },
+    };
 
     this.getNearRooms = function() {
 
         return nearRooms;
-    },
+    };
 
     this.getNearRoom = function(index) {
 
         return nearRooms[index];
-    },
+    };
 
     this.clearNearRoom = function() {
 
         nearRooms = [];
-    }
+    };
 };
 
 var Users = function() {
@@ -493,9 +493,14 @@ exports.initApp = function(ioInstance, socketInstance){
     socket.emit('connected');
 
     // Host Events
-    socket.on('userPositionGetted', manageUserPosition);
-    socket.on('userPseudoSubmitted', validateUserPseudo);
-    socket.on('createRoomRequested', createRoom);
+    socket.on('userGeoPositionTaken', activateUserGeoPosition);
+    socket.on('userPseudoSubmit', approveUserPseudo);
+    socket.on('createGameRequested', createRoom);
+
+
+
+
+    // socket.on('createRoomRequested', createRoom);
     socket.on('startQuizRequested', startQuizEngine);
     socket.on('hostNextRound', hostNextRound);
 
@@ -503,7 +508,7 @@ exports.initApp = function(ioInstance, socketInstance){
     socket.on('playerJoinGame', playerJoinGame);
     socket.on('playerAnswer', playerAnswer);
     socket.on('playerRestart', playerRestart);
-}
+};
 
 /* *******************************
    *                             *
@@ -511,8 +516,8 @@ exports.initApp = function(ioInstance, socketInstance){
    *                             *
    ******************************* */
 
-function manageUserPosition (userPosition) {
-    console.log('manageUserPosition:' + userPosition.latitude + '/' + userPosition.longitude + '/' + userPosition.accuracy);
+function activateUserGeoPosition (userPosition) {
+    console.log('activateUserGeoPosition:' + userPosition.latitude + '/' + userPosition.longitude + '/' + userPosition.accuracy);
 
     var myUser;
 
@@ -528,7 +533,7 @@ function searchUserNearRooms(userId) {
     var maxDistance = 100;
 
     var myUser;
-    var handleRoom;
+    var checkIsNearRoom;
 
     myUser = appUsers.getUser(socket.id);
 
@@ -538,47 +543,55 @@ function searchUserNearRooms(userId) {
         return;
     }
 
-    handleRoom = function(myRoom) {
+    checkIsNearRoom = function(myRoom) {
+
         var myMaster;
         var distance;
+        var clientData;
 
         myMaster = appUsers.getUser(myRoom.masterId);
         if (myMaster.position !== {}) {
             distance = getDistance(myUser.position, myMaster.position);
-            if (distance <= maxDistance) {
+            // if (distance <= maxDistance) {
                 myUser.addNearRoom(myRoom.id, distance);
                 console.log('searchUserNearRooms:' + myRoom.id + '/' + distance);
-            }
+            // }
         }
-    }
+    };
 
-    appRooms.forEach(handleRoom);
+    appRooms.forEach(checkIsNearRoom);
 
-    socket.emit('userNearRoomsSetted', myUser.getNearRooms());
+    clientData = {
+        nearRooms: myUser.getNearRooms()
+    };
+
+    socket.emit('userNearRoomsSearchCompleted', clientData);
 }
 
-function validateUserPseudo(receivedData) {
+function approveUserPseudo(data) {
+    console.log('approveUserPseudo:' + data.userPseudo);
+    return;
 
-    var sentData;
+    var clientData;
 
     myUser = appUsers.getUser(socket.id);
-    myUser.pseudo = receivedData.userPseudo;
+    myUser.pseudo = data.userPseudo;
 
     console.log('nearRoomsCount:' + myUser.nearRoomsCount());
 
-    sentData = {
+    clientData = {
         userPseudo: myUser.pseudo,
         nearRooms: myUser.getNearRooms()
-    }
+    };
 
-    socket.emit('userPseudoValidated', sentData);
+    socket.emit('userPseudoApproved', clientData);
 }
 
 /**
  * Create a room
  */
 function createRoom() {
-    // console.log('createRoom socketId:' + socket.id)
+    console.log('createRoom socketId:' + socket.id);
 
     var myUser;
     var myRoom;
@@ -597,11 +610,10 @@ function createRoom() {
     appRooms.addRoom(myRoom);
 
     myUser = appUsers.getUser(socket.id);
-    myUser.pseudo = 'quizmaster';
     myUser.addNearRoom(myRoom.id, 0);
 
     socket.emit('roomCreated', roomId);
-};
+}
 
 /*
  * Start quiz engine
@@ -622,7 +634,7 @@ global.startQuiz = function(roomId) {
     console.log('startQuiz' + roomId);
 
     io.sockets.in(roomId).emit('quizStarted', roomId);
-}
+};
 
 /*
  * Start episode
@@ -681,7 +693,7 @@ function playerJoinGame(data) {
     var room = socket.manager.rooms["/" + data.gameId];
 
     // If the room exists...
-    if( room != undefined ){
+    if( room !== undefined ){
         // attach the socket id to the data object.
         data.mySocketId = sock.id;
 
