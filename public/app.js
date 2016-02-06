@@ -23,11 +23,14 @@ var livequizzApp = {
         // On lie la variable html du navigateur Onsen UI à son équivalent javascript
         app.onsNavigator = ons_navigator;
         showScreen(app.userPseudoScreen);
+        app.socket.on('userPseudoApproved', function() {console.log('userPseudoApproved');} );
+
     };
 
     var showScreen = function(screen) {
         screen.init();
         screen.display();
+        console.log('showScreen');
     };
 
     app.getScreenViewFile = function(magicName) {

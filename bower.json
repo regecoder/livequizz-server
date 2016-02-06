@@ -1,0 +1,14 @@
+{
+  "name": "livequizz",
+  "authors": [
+    "regecoder <regecoder@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "",
+  "homepage": "",
+  "dependencies": {
+    "underscore": "^1.8.3"
+  }
+}

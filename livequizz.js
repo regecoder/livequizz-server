@@ -252,12 +252,12 @@ var Rooms = function() {
     };
 
     this.forEach = function(callback) {
-        for (key in rooms) {
+        for (var key in rooms) {
             if (rooms.hasOwnProperty(key)) {
                 callback(rooms[key]);
             }
         }
-    }
+    };
 };
 
 // getDistance: get distance between 2 positions
@@ -269,13 +269,13 @@ var getDistance = function (position1, position2) {
 
     var DegreeToRadian = function (degree) {
         return degree * Math.PI / 180;
-    }
+    };
 
     return Math.acos(Math.sin(DegreeToRadian(position1.latitude)) * Math.sin(DegreeToRadian(position2.latitude)) + Math.cos(DegreeToRadian(position1.latitude)) * Math.cos(DegreeToRadian(position2.latitude)) * Math.cos(DegreeToRadian(position2.longitude - position1.longitude))) * earthRadius;
-}
+};
 
-var appUsers = new Users;
-var appRooms = new Rooms;
+var appUsers = new Users();
+var appRooms = new Rooms();
 
 var QuizEngine = function(roomId, quiz, scenario) {
 

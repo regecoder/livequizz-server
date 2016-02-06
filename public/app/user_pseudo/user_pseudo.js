@@ -28,10 +28,7 @@
                     userPseudo : $('#pseudo-input').val()
                 };
                 app.onsNavigator.pushPage('index2.html', data);
-                // var data = {
-                //     userPseudo : $('#pseudo-input').val()
-                // };
-                // app.socket.emit('userPseudoSubmit', data);
+                app.socket.emit('userPseudoSubmit', data);
             },
     };
 
