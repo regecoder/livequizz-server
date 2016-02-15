@@ -2,26 +2,26 @@
 
 module.exports = Game;
 
-function Game(gameId) {
+function Game(gameId, ownerUser) {
 
-    var players = {};
+    var users = {};
 
     this.id = gameId;
+    this.ownerUser = ownerUser;
     this.currentScene = null;
-    this.playersCount = 0;
-    this.masterId = null;
+    this.usersCount = 0;
 
-    this.addPlayer = function(player) {
-        this.playersCount++;
-        players[player.socketId] = player;
+    this.addUser = function(User) {
+        this.usersCount++;
+        users[User.socketId] = User;
     };
 
-    this.getPlayer = function(socketId) {
-        return players[socketId];
+    this.getUser = function(socketId) {
+        return users[socketId];
     };
 
-    this.removePlayer = function(socketId) {
-        this.playersCount--;
-        delete players[socketId];
+    this.removeUser = function(socketId) {
+        this.usersCount--;
+        delete users[socketId];
     };
 }

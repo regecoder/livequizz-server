@@ -9,6 +9,7 @@ function User(socketId, pseudo) {
     this.socketId = socketId;
     this.pseudo = pseudo;
     this.position = {};
+    this.game = {};
 
     this.addNearGame = function(gameId, distance) {
 

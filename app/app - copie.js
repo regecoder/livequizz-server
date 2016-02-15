@@ -72,7 +72,6 @@ function initUser(socket) {
            
         socket.on('userLogin', userLogin);
         socket.on('createGame', createGame);
-        // socket.on('joinGame', joinGame);
 
 
 
@@ -95,54 +94,41 @@ function initUser(socket) {
 
         var myUser; 
 
-        // TODO
-        if (appUsers.userPseudoIsAvailable(data.userPseudo) === false) {
-            socket.emit('userPseudoNotAvailable');
-        } else {
+        if (appUsers.userPseudoIsAvailable(data.userPseudo) === true) {
             myUser = new User(socket.id, data.userPseudo);
             appUsers.addUser(myUser);
             socket.emit('userLogged');
+        } else {
+            // TODO
+            socket.emit('userPseudoNotAvailable');
         }
     }
 
     function createGame() {
+
         console.log('createGame socketId:' + socket.id);
 
-        var newGameId,
-            myGame,
-            myUser,
-            data;
+        var myUser;
+        var myGame;
+        var myPlayer;
 
-        myGame = appGames.getGameByOwnerId(socket.id);
-        if (_.isUndefined(myGame) === false) {
-            socket.emit('gameOwned', myGame.id);         
-            console.log('gameOwned gameId:' + myGame.id);
-        } else {
-            newGameId = getNewGameId();
-            myUser = appUsers.getUser(socket.id);
-            myGame = new Game(newGameId, myUser);
-            myGame.addUser(myUser);
-            appGames.addGame(myGame);
-            data = {
-                gameId: newGameId,
-                ownerUser: myUser
-            };
+        // Create a unique Socket.IO Game
+        gameId = (Math.random() * 10000).toString();
 
-            socket.join(newGameId);
-            socket.emit('gameCreated', data);         
-            console.log('gameCreated newGameId:' + data.gameId);
-        }        
+        // Join the Game and wait for the players
 
-        function getNewGameId() {
+        io.sockets.socket(socketId).join(gameId);
 
-            var newGameId;
+        myGame = new Game(gameId);
+        myPlayer = new Player(socket.id);
+        myGame.masterId = myPlayer.socketId;
+        myGame.addPlayer(myPlayer);
+        appGames.addGame(myGame);
 
-            newGameId = (Math.random() * 10000).toString();
-            newGameId = Array(5).join('0') + newGameId;
-            newGameId = newGameId.slice(-4);
+        myUser = appUsers.getUser(socket.id);
+        myUser.addNearGame(myGame.id, 0);
 
-            return newGameId;
-        }
+        io.sockets.socket(socketId).emit('gameCreated', gameId);
 
     }
 

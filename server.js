@@ -1,37 +1,42 @@
 'use strict';
 
-var express = require('express');
-var path = require('path');
-var http = require('http');
-var sio = require('socket.io');
+var express = require('express'),
+    path = require('path'),
+    http = require('http'),
+    cors = require('cors'),
+    sio = require('socket.io'),
+    bodyParser = require('body-parser');
 
 var app = express();
+
 var port = process.env.PORT || 8080;
 var root = path.resolve(__dirname);
 
 var myApp = require('./app/app');
-var myRoutes = require('./app/routes');
 
+var myWebRoutes = require('./app/routes-web');
+var myApiRoutes = require('./app/routes-api');
+
+app.use(cors());
+
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 
 app.use(express.static(path.join(root, 'public')));
+// app.use('/assets', express.static(path.join(root, 'public/assets')));
 
-// app.get('/', function(req, res) {
-//     res.sendfile(root + '/public/index8.html');
-// });
-// app.get('*', function(req, res) {
-//     res.redirect('/');
-// });
-myRoutes(app, root);
+// Routes
+app.use('/api', myApiRoutes);
+app.use('/', myWebRoutes);
 
 var server = http.createServer(app).listen(port);
+
+server.listen(port, function() {
+    console.info('server started on port ' + port);
+});
+
 var io = sio.listen(server);
 
-// Reduce the logging output of Socket.IO
-io.set('log level', 1);
+myApp.initApp(io);
 
-myApp.init(io);
-
-io.sockets.on('connection', function(socket) {
-    // console.log('connection:' + socket.id);
-    myApp.onConnection(socket);
-});
+io.sockets.on('connection', myApp.initUser);

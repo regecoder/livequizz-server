@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('../lib/underscore/underscore-min');
+
 module.exports = Games;
 
 function Games() {
@@ -28,5 +30,10 @@ function Games() {
                 callback(games[key]);
             }
         }
+    };
+
+    this.getGameByOwnerId = function(ownerId) {
+        var gameOwned = _.findWhere(games, {ownerId: ownerId});
+        return gameOwned;
     };
 }
