@@ -1,195 +1,173 @@
 {
-    "id": "2" ,
-    "name": "Quiz2" ,
-    "theme": "Theme2",
+    "name": "Quiz3" ,
+    "theme": "Parlez-vous l'UX ?",
     "questions" : [
         {
             "question": {
-                "text": "Q1",
+                "text": "Qu'est-ce la méthode \"guérilla\" ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Une stratégie de repli"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Une agression volontaire de l'utilisateur"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "Un test utilisateur en isolation totale"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
-                    }
-                ],
-                "goodAnswer": "1"
-            },
-            "response": {
-                "text": "R"
-            }
-        },
-        {
-            "question": {
-                "text": "Q2",
-                "answer": [
-                    {
-                        "id": "1",
-                        "text": "A1"
-                    },
-                    {
-                        "id": "2",
-                        "text": "A2"
-                    },
-                    {
-                        "id": "3",
-                        "text": "A3"
-                    },
-                    {
-                        "id": "4",
-                        "text": "A4"
-                    }
-                ],
-                "goodAnswer": "2"
-            },
-            "response": {
-                "text": "R"
-            }
-        },
-        {
-            "question": {
-                "text": "Q3",
-                "answer": [
-                    {
-                        "id": "1",
-                        "text": "A1"
-                    },
-                    {
-                        "id": "2",
-                        "text": "A2"
-                    },
-                    {
-                        "id": "3",
-                        "text": "A3"
-                    },
-                    {
-                        "id": "4",
-                        "text": "A4"
-                    }
-                ],
-                "goodAnswer": "3"
-            },
-            "response": {
-                "text": "R"
-            }
-        },
-        {
-            "question": {
-                "text": "Q4",
-                "answer": [
-                    {
-                        "id": "1",
-                        "text": "A1"
-                    },
-                    {
-                        "id": "2",
-                        "text": "A2"
-                    },
-                    {
-                        "id": "3",
-                        "text": "A3"
-                    },
-                    {
-                        "id": "4",
-                        "text": "A4"
+                        "text": "Une approche informelle"
                     }
                 ],
                 "goodAnswer": "4"
-            },
-            "response": {
-                "text": "R"
             }
         },
         {
             "question": {
-                "text": "Q5",
+                "text": "Que signifie IHM ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Intelligent human method"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Interface homme machine"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "International hedonic miracle"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
-                    }
-                ],
-                "goodAnswer": "1"
-            },
-            "response": {
-                "text": "R"
-            }
-        },
-        {
-            "question": {
-                "text": "Q6",
-                "answer": [
-                    {
-                        "id": "1",
-                        "text": "A1"
-                    },
-                    {
-                        "id": "2",
-                        "text": "A2"
-                    },
-                    {
-                        "id": "3",
-                        "text": "A3"
-                    },
-                    {
-                        "id": "4",
-                        "text": "A4"
+                        "text": "Illegal human manipulation"
                     }
                 ],
                 "goodAnswer": "2"
-            },
-            "response": {
-                "text": "R"
+            }      
+        },
+        {
+            "question": {
+                "text": "Combien existe-t-il de critères de Bastien et Scapin ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "6"
+                    },
+                    {
+                        "id": "2",
+                        "text": "8"
+                    },
+                    {
+                        "id": "3",
+                        "text": "9"
+                    },
+                    {
+                        "id": "4",
+                        "text": "12"
+                    }
+                ],
+                "goodAnswer": "2"
             }
         },
         {
             "question": {
-                "text": "Q7",
+                "text": "Cherchez l'intrus :",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Charge de travail"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Guidage"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "Gestion des erreurs"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
+                        "text": "Contrôle utilisateur"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        },
+        {
+            "question": {
+                "text": "Quel critère est un déclencheur psychologique ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "La preuve sociale"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Le feed back"
+                    },
+                    {
+                        "id": "3",
+                        "text": "L'autonomie"
+                    },
+                    {
+                        "id": "4",
+                        "text": "L'alcool"
+                    }
+                ],
+                "goodAnswer": "1"
+            }
+        },
+        {
+            "question": {
+                "text": "À quoi est lié l'effet cocktail party ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "À l'attention sélective"
+                    },
+                    {
+                        "id": "2",
+                        "text": "À la théorie de la Gestalt"
+                    },
+                    {
+                        "id": "3",
+                        "text": "À l'IHM"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Au point focal"
+                    }
+                ],
+                "goodAnswer": "1"
+            }
+        },
+        {
+            "question": {
+                "text": "Quelle proposition ne correspond pas à un profil de gamer ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "L’explorateur"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Le tueur"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Le compétiteur"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Le collectionneur"
                     }
                 ],
                 "goodAnswer": "3"
-            },
-            "response": {
-                "text": "R"
             }
         }
     ]

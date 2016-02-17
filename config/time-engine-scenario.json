@@ -1,0 +1,24 @@
+[
+    {
+        "action": "quizIntro",
+        "duration": "5"
+    },
+    {
+        "action": "quizPostIntro",
+        "duration": "1"
+    },
+    {
+        "name": "quiz",
+        "loop": "#",
+        "scene": [
+            {
+                "action": "quizQuestion",
+                "duration": "10"
+            },
+            {
+                "action": "quizResult",
+                "duration": "3"
+            }
+        ]
+    }
+]

@@ -2,15 +2,16 @@
 
 var _ = require('../lib/underscore/underscore-min');
 
-var User   = require('./user');
-var Users  = require('./users');
-var Player = require('./player');
-var Game   = require('./game');
-var Games  = require('./games');
-var Timer  = require('./timer');
+var User = require('./user');
+var Users= require('./users');
+var Game = require('./game');
+var Round = require('./round');
+var Games = require('./games');
+var Timer = require('./timer');
 var TimeEngine = require('./time-engine');
+var QuizEngine = require('./quiz-engine');
 
-var scenario = require('../data/scenario.json');
+var timeEngineScenario = require('../config/time-engine-scenario.json');
 
 var io;
 
@@ -22,38 +23,10 @@ var appThis = this;
 module.exports.initApp = initApp;
 module.exports.initUser = initUser;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-module.exports.getQuiz = getQuiz;
-
-
-
-
-
-
-
-
-
-function getQuiz(quizId) {
-
-    var json;
-
-    json = require('../data/quiz-' + quizId + '.json');
-
-    return json;
-}
-
+module.exports.quizIntro = quizIntro;
+module.exports.quizPostIntro = quizPostIntro;
+module.exports.quizQuestion = quizQuestion;
+module.exports.quizResult = quizResult;
 
 function initApp(ioInstance) {
 
@@ -72,26 +45,15 @@ function initUser(socket) {
            
         socket.on('userLogin', userLogin);
         socket.on('createGame', createGame);
-        // socket.on('joinGame', joinGame);
-
-
-
-        
+        // Pas utilisé
+        // socket.on('findGame', findGame);
+        socket.on('joinGame', joinGame);
+        socket.on('startGame', startGame);
+        socket.on('voteTheme', voteTheme);
     }   
  
-
-    // var myUser;
-
-    // myUser = new User(socket.id);
-    // appUsers. 
-
-
-
-
-    // appUsers.addUser(myUser);
-
     function userLogin(data) {
-        console.log('userLogin: ' + data.userPseudo + '/' + socket.id);
+        console.log('userLogin:' + socket.id);
 
         var myUser; 
 
@@ -102,11 +64,12 @@ function initUser(socket) {
             myUser = new User(socket.id, data.userPseudo);
             appUsers.addUser(myUser);
             socket.emit('userLogged');
+            console.log('userLogged:' + myUser.pseudo);
         }
     }
 
     function createGame() {
-        console.log('createGame socketId:' + socket.id);
+        console.log('createGame');
 
         var newGameId,
             myGame,
@@ -121,16 +84,18 @@ function initUser(socket) {
             newGameId = getNewGameId();
             myUser = appUsers.getUser(socket.id);
             myGame = new Game(newGameId, myUser);
+            myGame.status = 'waiting';
+            myGame.quizEngine = new QuizEngine();
             myGame.addUser(myUser);
             appGames.addGame(myGame);
-            data = {
-                gameId: newGameId,
-                ownerUser: myUser
-            };
 
-            socket.join(newGameId);
+            data = {
+                game: myGame,
+                user: myUser
+            };
+            socket.join(myGame.id);
             socket.emit('gameCreated', data);         
-            console.log('gameCreated newGameId:' + data.gameId);
+            console.log('gameCreated gameId:' + data.game.id + '/user:' + data.user.pseudo);
         }        
 
         function getNewGameId() {
@@ -146,300 +111,169 @@ function initUser(socket) {
 
     }
 
-    // socket.on('userLogin', function(data){
-    //     console.log('userLogin: ' + data.userPseudo + '/' + socket.id);
-    //     socket.emit('messagereceived');
+    // function findGame() {
+    //     console.log('findGame socketId:' + socket.id);
+    //     socket.emit('');
+    // }
 
+    function joinGame(gameId) {
+        console.log('joinGame gameId:' + gameId);
 
-    // });
+        var myGame,
+            myUser,
+            data;
 
+        myGame = appGames.getGame(gameId);
+        if (_.isUndefined(myGame)) {
+            // TODO
+            socket.emit('gameNonexistent');         
+            console.log('gameNonexistent');
+        } else {
+            myUser = appUsers.getUser(socket.id);
+            myGame.addUser(myUser);
+            data = {
+                game: myGame,
+                user: myUser
+            };
 
-    socket.on('userGeoPositionTaken', activateUserGeoPosition);
-    socket.on('userPseudoSubmit', function(data) {
-        approveUserPseudo(data, socket.id);
-    });
-    socket.on('createGameRequested', createGame);
-
-
-
-
-    // socket.on('createGameRequested', createGame);
-    socket.on('startQuizRequested', startQuizEngine);
-    socket.on('hostNextRound', hostNextRound);
-
-    socket.on('playerJoinGame', playerJoinGame);
-    socket.on('playerAnswer', playerAnswer);
-    socket.on('playerRestart', playerRestart);
-
-    socket.emit('connected');
-}
-
-/* *******************************
-   *                             *
-   *       HOST FUNCTIONS        *
-   *                             *
-   ******************************* */
-
-function activateUserGeoPosition (userPosition) {
-    console.log('activateUserGeoPosition:' + userPosition.latitude + '/' + userPosition.longitude + '/' + userPosition.accuracy);
-
-    var myUser;
-
-    myUser = appUsers.getUser(socket.id);
-    myUser.position = userPosition;
-
-    searchUserNearGames(socket.id);
-}
-
-function searchUserNearGames(userId) {
-
-    // Distance maximale admise entre la position de l'utilisateur et celle du créateur d'une partie pour considérer cette dernère comme proche de l'utilisateur.
-    var maxDistance = 100;
-
-    var myUser;
-    var checkIsNearGame;
-
-    myUser = appUsers.getUser(socket.id);
-
-    console.log('gamesCount:' + appGames.count);
-
-    if (appGames.count === 0) {
-        return;
-    }
-
-    checkIsNearGame = function(myGame) {
-
-        var myMaster;
-        var myDistance;
-        var clientData;
-
-        myMaster = appUsers.getUser(myGame.masterId);
-        if (myMaster.position !== {}) {
-            myDistance = distance(myUser.position, myMaster.position);
-            // if (myDistance <= maxDistance) {
-                myUser.addNearGame(myGame.id, distance);
-                console.log('searchUserNearGames:' + myGame.id + '/' + myDistance);
-            // }
+            // TODO: Vérifier si l'utilisateur n'est pas déjà dans la room
+            socket.join(myGame.id);
+            socket.emit('gameJoined', data);
+            io.sockets.in(myGame.id).emit('gameUserJoined', data);
+            console.log('gameJoined gameId:' + data.game.id + '/user:' + data.user.pseudo + '/players:' + data.game.usersCount);
         }
-    };
-
-    appGames.forEach(checkIsNearGame);
-
-    clientData = {
-        nearGames: myUser.getNearGames()
-    };
-
-    io.sockets.socket(socketId).emit('userNearGamesSearchCompleted', clientData);
-}
-
-function approveUserPseudo(data, socketId) {
-    console.log('approveUserPseudo:' + socketId);
-
-// var myGame = new Game(124);
-// myGame.run(appThis);
-
-    startQuizEngine(125);
-
-
-
-
-
-    // var timer = new Timer(5000, 5, 'countdown', function(){console.log('complete');}, function(steps, count){console.log(steps + '/' + count);});
-    // timer.start();
-
-
-
-    // io.sockets.socket(socketId).emit('userPseudoApproved');
-
-
-
-    return;
-
-    var clientData;
-
-    myUser = appUsers.getUser(socket.id);
-    myUser.pseudo = data.userPseudo;
-
-    console.log('nearGamesCount:' + myUser.nearGamesCount());
-
-    clientData = {
-        userPseudo: myUser.pseudo,
-        nearGames: myUser.getNearGames()
-    };
-
-    io.sockets.socket(socketId).emit('userPseudoApproved', clienData);
-}
-
-/**
- * Create a game
- */
-// function createGame() {
-//     console.log('createGame socketId:' + socket.id);
-
-//     var myUser;
-//     var myGame;
-//     var myPlayer;
-
-//     // Create a unique Socket.IO Game
-//     gameId = ((Math.random() * 100000) | 0).toString();
-
-//     // Join the Game and wait for the players
-
-//     io.sockets.socket(socketId).join(gameId);
-
-//     myGame = new Game(gameId);
-//     myPlayer = new Player(socket.id);
-//     myGame.masterId = myPlayer.socketId;
-//     myGame.addPlayer(myPlayer);
-//     appGames.addGame(myGame);
-
-//     myUser = appUsers.getUser(socket.id);
-//     myUser.addNearGame(myGame.id, 0);
-
-//     io.sockets.socket(socketId).emit('gameCreated', gameId);
-// }
-
-/*
- * Start quiz engine
- * @param gameId
- */
-function startQuizEngine(gameId) {
-
-    // var quizFile = '../data/quiz1.json';
-    // var quiz = require(quizfile);
-    console.log('startQuizEngine gameId:' + gameId);
-
-    var quizEngine;
-
-    quizEngine = new TimeEngine(gameId, scenario, Timer, appThis, io, _);
-    quizEngine.start();
-}
-
-/*
- * Start quiz
- * @param gameId
- */
-module.exports.startQuiz = function(gameId) {
-    console.log('startQuiz:' + gameId);
-    // appGames[gameId].currentScene = 0;
-    io.sockets.in(gameId).emit('quizStarted', gameId);
-};
-
-module.exports.startQuestion = function(gameId, sequence) {
-
-    // startScene(gameId, currentScene);
-
-    var data;
-
-    data = {
-        gameId: gameId,
-        sequence: sequence
-    };
-    io.sockets.in(gameId).emit('questionStarted', gameId, sequence.sequenceStep);
-    console.log('startQuestion:' + gameId + '/' + sequence.sequenceStep);
-};
-
-module.exports.startResponse = function(gameId, sequence) {
-    console.log('startResponse:' + gameId + '/' + sequence.sequenceStep);
-
-    // startScene(gameId, currentScene);
-    io.sockets.in(gameId).emit('responseStarted', gameId, sequence.sequenceStep);
-};
-
-/**
- * A player answered correctly. Time for the next word.
- * @param data Sent from the client. Contains the current round and gameId (game)
- */
-function hostNextRound(data) {
-    if(data.roundIndex < quiz.length ){
-        // Send a new set of words back to the host and players.
-        startScene(data.gameId, data.roundIndex);
-    } else {
-        // If the current round exceeds the number of words, send the 'gameOver' event.
-        io.sockets.in(data.gameId).emit('gameOver', data);
     }
-}
-/* *****************************
-   *                           *
-   *     PLAYER FUNCTIONS      *
-   *                           *
-   ***************************** */
 
-/**
- * A player clicked the 'START GAME' button.
- * Attempt to connect them to the game that matches
- * the gameId entered by the player.
- * @param data Contains data entered via player's input - playerName and gameId.
- */
-function playerJoinGame(data) {
-    // console.log('playerJoinGame socketId:' + socket.id);
+    function startGame(gameId) {
+        console.log('startGame gameId:' + gameId);
 
-    // A reference to the player's Socket.IO socket object
-    var sock = this;
+        var myGame;
 
-    // Look up the game ID in the Socket.IO manager object.
-    var game = socket.manager.games["/" + data.gameId];
+        myGame = appGames.getGame(gameId);
+        myGame.forEachUser(initUserGame);
+        myGame.status = 'started';
 
-    // If the game exists...
-    if( game !== undefined ){
-        // attach the socket id to the data object.
-        data.mySocketId = sock.id;
+        io.sockets.in(myGame.id).emit('gameStarted', myGame);
+        console.log('gameStarted gameId:' + myGame.id);
 
-        // Join the game
-        sock.join(data.gameId);
+        startRound(0, gameId);
 
-        //console.log('Player ' + data.playerName + ' joining game: ' + data.gameId );
+        function initUserGame(user) {
+            user.initGame();
+        }
+    }
 
-        // Emit an event notifying the clients that the player has joined the game.
-        io.sockets.in(data.gameId).emit('playerJoinedGame', data);
+    function startRound(roundIndex, gameId) {
 
-    } else {
-        // Otherwise, send an error message back to the player.
-        socket.emit('error',{message: "This game does not exist."} );
+        var myGame;
+
+        myGame = appGames.getGame(gameId);
+        myGame.forEachUser(initUserRound);
+        myGame.quizEngine.loadQuizList();
+        myGame.roundIndex = roundIndex;
+        myGame.rounds[roundIndex] = new Round();
+
+        io.sockets.in(myGame.id).emit('roundStarted', myGame);
+        console.log('roundStarted gameId:' + myGame.id + '/roundId:' + myGame.roundIndex);
+
+        function initUserRound(user) {
+            user.initRound();
+        }
+    }
+
+    function voteTheme(data) {
+
+        var myGame,
+            myRound;
+
+        myGame = appGames.getGame(data.gameId);
+        myRound = myGame.rounds[myGame.roundIndex];
+        myRound.addThemeVote(data.themeIndex);
+
+        io.sockets.in(myGame.id).emit('themeVoted', myRound);
+        console.log('themeVoted gameId:' + myGame.id + '/roundId:' + myGame.roundIndex + '/themeIndex:' + data.themeIndex);
+
+        if (areAllUsersVoted() === true) {
+            startQuiz(myGame.id);
+        }
+
+        function areAllUsersVoted() {
+
+            var votesCount = myRound.getThemeVotesCount();
+            var playersCount = myGame.usersCount;
+
+            return (votesCount === playersCount);
+        }         
+    }
+
+    function startQuiz(gameId) {
+
+        var myGame,
+            myGameClone,
+            myRound,
+            themeIndex,
+            timeEngine,
+            quizScenario;
+
+        myGame = appGames.getGame(gameId);
+        myRound = myGame.rounds[myGame.roundIndex];
+
+        themeIndex = myRound.getWinnerThemeIndex();
+        myRound.quiz = myGame.quizEngine.quizList[themeIndex];
+
+        myGameClone = getClone(myGame);
+        quizScenario = getQuizScenario(timeEngineScenario, myRound.quiz.questions.length);
+
+        io.sockets.in(myGame.id).emit('quizStarted');
+        console.log('quizStarted gameId:' + myGame.id);
+
+        timeEngine = new TimeEngine(myGameClone, quizScenario, Timer, appThis, io, _);
+        timeEngine.start();
+
+        function getQuizScenario(scenario, loop) {
+            var quizScenario;
+            quizScenario = JSON.stringify(scenario).replace(/#/g, loop);
+            quizScenario = JSON.parse(quizScenario);
+            return quizScenario;
+        }
+    }
+
+    // Permet de retirer les méthodes d'un objet = plus léger
+    // L'objet récupéré est un clone :
+    // Les modifications apportées au clone ne sont pas répercutées sur l'objet original
+    function getClone(myObject) {
+        return JSON.parse(JSON.stringify(myObject));
     }
 }
 
-/**
- * A player has tapped a word in the word list.
- * @param data gameId
- */
-function playerAnswer(data) {
-    // console.log('Player ID: ' + data.playerId + ' answered a question with: ' + data.answer);
-
-    // The player's answer is attached to the data object.  \
-    // Emit an event with the answer so it can be checked by the 'Host'
-    io.sockets.in(data.gameId).emit('hostCheckAnswer', data);
+function quizIntro(gameClone) {
+    console.log('quizIntro:' + gameClone.id);
+    io.sockets.in(gameClone.id).emit('quizIntroStarted', gameClone);
 }
 
-/**
- * The game is over, and a player has clicked a button to restart the game.
- * @param data
- */
-function playerRestart(data) {
-    // console.log('Player: ' + data.playerName + ' ready for new game.');
-
-    // Emit the player's data back to the clients in the game game.
-    data.playerId = this.id;
-    io.sockets.in(data.gameId).emit('playerJoinedGame',data);
+// Remplit le rôle de delay
+// Permet au client de charger l'écran des questions au déclenchement de l'événement quizIntroTEComplete
+// Sinon, l'événement quizQuestionStarted de la 1ere question n'est pas interceptée par le client
+function quizPostIntro(gameClone) {
+    console.log('quizPostIntro:' + gameClone.id);
 }
 
-/**
- * Start question
- *
- * @param gameId
- * @param questionIndex
- */
-function startScene(gameId, sceneIndex) {
-    var sceneCount;
-    var data;
+function quizQuestion(gameClone, questionIndex) {
+    console.log('quizQuestion:' + gameClone.id + '/' + questionIndex);
 
-    sceneCount = quiz.length;
-
-    data = {
-        sceneIndex: sceneIndex,
-        sceneCount: sceneCount,
-        sceneData: quiz[sceneIndex]
+    var data = {
+        gameClone: gameClone,
+        questionIndex: questionIndex
     };
+    io.sockets.in(gameClone.id).emit('quizQuestionStarted', data);
+}
 
-    io.sockets.in(gameId).emit('startNewRound', data);
+function quizResult(gameClone, questionIndex) {
+    console.log('quizResult:' + gameClone.id + '/' + questionIndex);
+
+    var data = {
+        gameClone: gameClone,
+        questionIndex: questionIndex
+    };
+    io.sockets.in(gameClone.id).emit('quizResultStarted', data);
 }

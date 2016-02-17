@@ -11,6 +11,19 @@ function User(socketId, pseudo) {
     this.position = {};
     this.game = {};
 
+    this.initGame = initGame;
+    this.initRound = initRound;
+
+    function initGame() {
+        this.game = {
+            rounds: []
+        };
+    }
+
+    function initRound(roundIndex) {
+        this.game.rounds[roundIndex] = {};
+    }
+
     this.addNearGame = function(gameId, distance) {
 
         var i;

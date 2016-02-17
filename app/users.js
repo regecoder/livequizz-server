@@ -34,6 +34,14 @@ function Users() {
         delete users[socketId];
     };
 
+    this.forEach = function(callback) {
+        for (var key in users) {
+            if (users.hasOwnProperty(key)) {
+                callback(users[key]);
+            }
+        }
+    };
+
     this.userPseudoIsAvailable = function(userPseudo) {
         // TODO
         return true;

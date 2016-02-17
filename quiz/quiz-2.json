@@ -1,0 +1,174 @@
+{
+    "name": "Quiz2" ,
+    "theme": "Des histoires bizarres",
+    "questions" : [
+        {
+            "question": {
+                "text": "Selon Christophe Colomb, la terre était en forme de ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Poire"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Orange"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Chouquette"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Mangue"
+                    }
+                ],
+                "goodAnswer": "1"
+            }
+        },
+        {
+            "question": {
+                "text": "Qu’est-ce que les Nazis avaient interdit dans les jardins ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Les fraises"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Les nains de jardin"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Les citrouilles"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Les oeufs"
+                    }
+                ],
+                "goodAnswer": "2"
+            }       
+        },
+        {
+            "question": {
+                "text": "Qu’a fait Louis XIII pour la première fois, à 7 ans ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Il a sorti un single"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Il a gagné un duel à mort"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Il est sorti de son château"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Il a pris un bain"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        },
+        {
+            "question": {
+                "text": "En Chine, que signifie “prendre le bus 11” ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Accepter un pot de vin"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Mourir"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Faire un écart"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Marcher"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        },
+        {
+            "question": {
+                "text": "Que représente le logo de BMW ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Une hélice"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Une banane"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Un lion"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Un volant"
+                    }
+                ],
+                "goodAnswer": "1"
+            }
+        },
+        {
+            "question": {
+                "text": "Quelle est la couleur du cheval d’Henri IV ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Noir"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Jaune devant, marron derrière"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Blanc"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Rose à paillettes"
+                    }
+                ],
+                "goodAnswer": "3"
+            }
+        },
+        {
+            "question": {
+                "text": "Qui est né le premier ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "L’oeuf"
+                    },
+                    {
+                        "id": "2",
+                        "text": "La poule"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Obi Wan Kenobi"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Chuck Norris"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        }
+    ]
+}

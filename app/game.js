@@ -1,27 +1,58 @@
 'use strict';
 
+var _ = require('../lib/underscore/underscore-min');
+
 module.exports = Game;
 
 function Game(gameId, ownerUser) {
 
-    var users = {};
+    var that = this;
+
+    // Debug: Nécessité de rendre publique users
+    // $stateParams ne gère que les attributs statiques
+
+    this.users = {};
 
     this.id = gameId;
     this.ownerUser = ownerUser;
-    this.currentScene = null;
     this.usersCount = 0;
 
-    this.addUser = function(User) {
-        this.usersCount++;
-        users[User.socketId] = User;
+    // 'waiting', 'started'
+    this.status = null;
+    this.quizEngine = {};
+    this.rounds = [];
+
+    this.roundIndex = null;
+
+    this.forEachUser = forEachUser;
+
+    function forEachUser(callback) {
+        for (var key in that.users) {
+            if (that.users.hasOwnProperty(key)) {
+                callback(that.users[key]);
+            }
+        }        
+    }
+
+    this.addUser = function(user) {
+
+        var myUser = _.findWhere(that.users, {socketId: user.socketId});
+
+        if (_.isUndefined(myUser)) {
+            myUser = user;
+            this.usersCount++;
+            that.users[user.socketId] = myUser;
+        }
+
+        return myUser;
     };
 
     this.getUser = function(socketId) {
-        return users[socketId];
+        return that.users[socketId];
     };
 
     this.removeUser = function(socketId) {
         this.usersCount--;
-        delete users[socketId];
+        delete that.users[socketId];
     };
 }

@@ -1,7 +1,7 @@
 [
     {
         "name": "quiz",
-        "action": "startQuiz",
+        "action": "startQuizIntro",
         "duration": "5"
     },
     {
@@ -10,13 +10,13 @@
         "scene": [
             {
                 "name": "question",
-                "action": "startQuestion",
-                "duration": "3"
+                "action": "startQuizQuestion",
+                "duration": "10"
             },
             {
                 "name": "response",
-                "action": "startResponse",
-                "duration": "3"
+                "action": "startQuizResponse",
+                "duration": "5"
             }
         ]
     }

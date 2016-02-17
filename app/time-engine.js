@@ -2,9 +2,11 @@
 
 module.exports = TimeEngine;
 
-function TimeEngine(gameId, scenario, Timer, scope, io, _) {
+function TimeEngine(gameClone, scenario, Timer, scope, io, _) {
 
     this.start = start;
+
+    var gameId = gameClone.id;
 
     var sequences;
 
@@ -38,11 +40,14 @@ function TimeEngine(gameId, scenario, Timer, scope, io, _) {
         loop = parseInt((sequence.loop || '1'), 10);
         for (i = 0; i < loop; i++) {
             curSequence = _.clone(sequence);
-            curSequenceStep = sequenceStep + i.toString() + '/';
+            if (sequenceStep !== '') {
+                sequenceStep += '|';
+            }
+            curSequenceStep = sequenceStep + i.toString();
             if (_.isUndefined(curSequence.scene) === true) {
                 if (_.isUndefined(typeof curSequence.action) === false && curSequence.action !== '') {
                     curSequence.sequenceStep = curSequenceStep;
-                    console.log(curSequence.sequenceStep + '/' + curSequence.action);
+                    // console.log(curSequence.sequenceStep + '/' + curSequence.action);
                     sequences.push(curSequence);
                     }
             } else {
@@ -55,7 +60,7 @@ function TimeEngine(gameId, scenario, Timer, scope, io, _) {
     }
 
     function start() {
-        console.log('quizEngine start');
+        // console.log('quizEngine start');
 
         var sequencesCount,
             sequenceIndex;
@@ -63,7 +68,7 @@ function TimeEngine(gameId, scenario, Timer, scope, io, _) {
         sequencesCount = sequences.length;
         sequenceIndex = 0;
 
-        io.sockets.in(gameId).emit('timeEngineStart');
+        // io.sockets.in(gameId).emit('TEStart');
 
         startSequence(sequenceIndex);
 
@@ -72,43 +77,61 @@ function TimeEngine(gameId, scenario, Timer, scope, io, _) {
             var curSequence,
                 myTimer,
                 timerOnTick,
-                timerOnComplete;
+                timerOnComplete,
+                curStepIndex;
 
             curSequence = sequences[sequenceIndex];
-            io.sockets.in(gameId).emit('timeEngineSequenceStart', curSequence);
+            // Permet d'obtenir facilement l'index de la question en cours
+            curStepIndex = getStepIndex(curSequence.sequenceStep);
+            io.sockets.in(gameId).emit(curSequence.action + 'TEStart', curStepIndex);
             // Execute action
-            scope[curSequence.action].call(scope, gameId, curSequence);
+            scope[curSequence.action].call(scope, gameClone, curStepIndex);
 
             sequenceIndex++;
 
-            if (_.isUndefined(typeof curSequence.ration) === true || _.isNaN(curSequence.duration) === true || curSequence.duration === 0) {
+            if (_.isUndefined(typeof curSequence.duration) === true || _.isNaN(
+
+                curSequence.duration) === true || curSequence.duration === 0) {
                 if (sequenceIndex === sequencesCount) {
-                    io.sockets.in(gameId).emit('timeEngineSequenceComplete', curSequence);
-                    io.sockets.in(gameId).emit('timeEngineComplete');
+                    io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
+                    // io.sockets.in(gameId).emit('TEComplete');
                 } else {
-                    io.sockets.in(gameId).emit('timeEngineSequenceComplete', curSequence);
+                    io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
                     startSequence(sequenceIndex);
                 }
+            
             } else {
-                timerOnTick = function(totalLength, curLength) {
-                    console.log('quizEngine tick:' + curLength + '/' + totalLength);
-                    io.sockets.in(gameId).emit('timeEngineSequenceTick', curSequence, totalLength, curLength);
+                
+                timerOnTick = function(totalTime, currentTime) {
+                    var data = {
+                        stepIndex: curStepIndex,
+                        currentTime: currentTime,
+                        totalTime: totalTime
+                    };
+                    console.log(curSequence.action + ' tick:' + currentTime + '/' + totalTime);
+                    io.sockets.in(gameId).emit(curSequence.action + 'TETick', data);
                 };
                 if (sequenceIndex === sequencesCount) {
                     timerOnComplete = function() {
-                        io.sockets.in(gameId).emit('timeEngineSequenceComplete', curSequence);
-                        io.sockets.in(gameId).emit('timeEngineComplete');
+                        io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
+                        // io.sockets.in(gameId).emit('TEComplete');
                     };
                 } else {
                     timerOnComplete = function() {
-                        io.sockets.in(gameId).emit('timeEngineSequenceComplete', curSequence);
+                        io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
                         startSequence(sequenceIndex);
                     };
                 }
-                console.log('QuizEngine start timer');
+
                 myTimer = new Timer((curSequence.duration * 1000), 'countdown', timerOnComplete, timerOnTick);
                 myTimer.start();
             }
+        }
+
+        // Fonction à revoir car elle ne renvoie que le premier niveau de l'étape en cours.
+        // Suffisant pour livequizz
+        function getStepIndex(sequenceStep) {
+            return parseInt(sequenceStep.substr(0, 1), 10);
         }
     }
 }

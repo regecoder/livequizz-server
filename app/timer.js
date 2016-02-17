@@ -26,12 +26,12 @@ function Timer(duration, type, onComplete, onTick)
     this.start = function () {
         var start = new Date().getTime();
         timeout = setTimeout(tick, speed, start);
-        console.log('timer start');
+        // console.log('timer start');
     };
 
     this.stop = function () {
         clearTimeout(timeout);
-        console.log('timer stop');
+        // console.log('timer stop');
     };
 
     function tick(start) {
@@ -57,7 +57,7 @@ function Timer(duration, type, onComplete, onTick)
         }
 
         if (count === steps) {
-            console.log('timer complete');
+            // console.log('timer complete');
             onComplete();
             return;
         } else {

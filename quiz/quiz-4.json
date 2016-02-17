@@ -1,195 +1,173 @@
 {
-    "id": "1" ,
-    "name": "Quiz1" ,
-    "theme": "Theme1",
+    "name": "Quiz4" ,
+    "theme": "Un goût de paradis",
     "questions" : [
         {
             "question": {
-                "text": "Q1",
+                "text": "Le gîte de la cousine de Richnou se trouve à : ",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Tago Mago"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Pago Pago"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "Pabo Pabo"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
-                    }
-                ],
-                "goodAnswer": "1"
-            },
-            "response": {
-                "text": "R"
-            }
-        },
-        {
-            "question": {
-                "text": "Q2",
-                "answer": [
-                    {
-                        "id": "1",
-                        "text": "A1"
-                    },
-                    {
-                        "id": "2",
-                        "text": "A2"
-                    },
-                    {
-                        "id": "3",
-                        "text": "A3"
-                    },
-                    {
-                        "id": "4",
-                        "text": "A4"
+                        "text": "Tago Mego"
                     }
                 ],
                 "goodAnswer": "2"
-            },
-            "response": {
-                "text": "R"
             }
         },
         {
             "question": {
-                "text": "Q3",
+                "text": "Si vous voulez un riz à la noix de coco, vous devrez commander ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Un Keke pua'a"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Un Lupe Tunuvilivili"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "Un Alaisa fa'apopo"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
+                        "text": "Non, en fait j'ai pas faim !"
                     }
                 ],
                 "goodAnswer": "3"
-            },
-            "response": {
-                "text": "R"
-            }
+            }       
         },
         {
             "question": {
-                "text": "Q4",
+                "text": "Quelle est l'île française la plus proche de Pago Pago ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "La nouvelle Calédonie"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Moorea"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "La Réunion"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
+                        "text": "Wallis et Futuna"
                     }
                 ],
                 "goodAnswer": "4"
-            },
-            "response": {
-                "text": "R"
             }
         },
         {
             "question": {
-                "text": "Q5",
+                "text": "Quel engin explose régulièrement au dessus du lagon ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Une mongolfière"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "Une montgolflère"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "Une montgolfiére"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
+                        "text": "Une montgolfière"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        },
+        {
+            "question": {
+                "text": "Qui est Jonny Fa'amatuainu ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Un rugbyman samoan"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Le chef du restaurant"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Le moniteur de plongée"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Un mec qu'on appelle Jo"
                     }
                 ],
                 "goodAnswer": "1"
-            },
-            "response": {
-                "text": "R"
             }
         },
         {
             "question": {
-                "text": "Q6",
+                "text": "Le dernier volcan actif de l'île s'est éteint ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "En 1911"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": " Entre 1923 et 1924"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "En 1907"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
+                        "text": "Quand Richnou a soufflé dessus"
                     }
                 ],
-                "goodAnswer": "2"
-            },
-            "response": {
-                "text": "R"
+                "goodAnswer": "1"
             }
         },
         {
             "question": {
-                "text": "Q7",
+                "text": "Que dégagent les palourdes tigrées de Polynésie ?",
                 "answer": [
                     {
                         "id": "1",
-                        "text": "A1"
+                        "text": "Un jus noirâtre"
                     },
                     {
                         "id": "2",
-                        "text": "A2"
+                        "text": "De petites perles nacrées"
                     },
                     {
                         "id": "3",
-                        "text": "A3"
+                        "text": "Des ions de calcium"
                     },
                     {
                         "id": "4",
-                        "text": "A4"
+                        "text": "Une sale odeur"
                     }
                 ],
                 "goodAnswer": "3"
-            },
-            "response": {
-                "text": "R"
             }
         }
     ]

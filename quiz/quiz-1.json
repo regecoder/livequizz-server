@@ -1,0 +1,174 @@
+{
+    "name": "Quiz1" ,
+    "theme": "Vous êtes fou ?",
+    "questions" : [
+        {
+            "question": {
+                "text": "Q1",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Optique 2000"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Antoine"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Afflelou"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Krys"
+                    }
+                ],
+                "goodAnswer": "3"
+            }
+        },
+        {
+            "question": {
+                "text": "Qui a dit : “Le fou se croit sage et le sage se reconnaît fou”. ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "William Shakespeare"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Victor Hugo"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Horace"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Loana"
+                    }
+                ],
+                "goodAnswer": "1"
+            }
+        },
+        {
+            "question": {
+                "text": "Où se trouve le Puy du Fou ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "En Val d’Oise"
+                    },
+                    {
+                        "id": "2",
+                        "text": "A Tataouine"
+                    },
+                    {
+                        "id": "3",
+                        "text": "En Seine et Marne"
+                    },
+                    {
+                        "id": "4",
+                        "text": "En Vendée"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        },
+        {
+            "question": {
+                "text": "Comment déplace-t-on le fou aux échecs ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "À la verticale"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Dans tous les sens"
+                    },
+                    {
+                        "id": "3",
+                        "text": "En diagonale"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Dans le sens inverse"
+                    }
+                ],
+                "goodAnswer": "3"
+            }
+        },
+        {
+            "question": {
+                "text": "Où peut-on voir le Chapelier fou ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Dans Cendrillons"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Dans Alice aux pays des merveilles"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Chez Mickey avec Richard"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Dans Merlin l’enchanteur"
+                    }
+                ],
+                "goodAnswer": "2"
+            }
+        },
+        {
+            "question": {
+                "text": "Qui a chanté “si je suis fou” ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Daniel Balavoine"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Michel Sardou"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Cyprien Lustre"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Jean Ferrat"
+                    }
+                ],
+                "goodAnswer": "1"
+            }
+        },
+        {
+            "question": {
+                "text": "Mais ils sont fous ces ?",
+                "answer": [
+                    {
+                        "id": "1",
+                        "text": "Germains"
+                    },
+                    {
+                        "id": "2",
+                        "text": "Paladins"
+                    },
+                    {
+                        "id": "3",
+                        "text": "Baguettes de pain"
+                    },
+                    {
+                        "id": "4",
+                        "text": "Romains"
+                    }
+                ],
+                "goodAnswer": "4"
+            }
+        }
+    ]
+}
