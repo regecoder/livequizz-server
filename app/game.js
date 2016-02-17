@@ -40,8 +40,8 @@ function Game(gameId, ownerUser) {
 
         if (_.isUndefined(myUser)) {
             myUser = user;
-            this.usersCount++;
             that.users[user.socketId] = myUser;
+            this.usersCount++;
         }
 
         return myUser;
@@ -52,7 +52,7 @@ function Game(gameId, ownerUser) {
     };
 
     this.removeUser = function(socketId) {
-        this.usersCount--;
         delete that.users[socketId];
+        this.usersCount--;
     };
 }

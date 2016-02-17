@@ -68,7 +68,7 @@ function TimeEngine(gameClone, scenario, Timer, scope, io, _) {
         sequencesCount = sequences.length;
         sequenceIndex = 0;
 
-        // io.sockets.in(gameId).emit('TEStart');
+        io.sockets.in(gameId).emit('TEStart');
 
         startSequence(sequenceIndex);
 
@@ -94,7 +94,7 @@ function TimeEngine(gameClone, scenario, Timer, scope, io, _) {
                 curSequence.duration) === true || curSequence.duration === 0) {
                 if (sequenceIndex === sequencesCount) {
                     io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
-                    // io.sockets.in(gameId).emit('TEComplete');
+                    io.sockets.in(gameId).emit('TEComplete');
                 } else {
                     io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
                     startSequence(sequenceIndex);
@@ -114,7 +114,7 @@ function TimeEngine(gameClone, scenario, Timer, scope, io, _) {
                 if (sequenceIndex === sequencesCount) {
                     timerOnComplete = function() {
                         io.sockets.in(gameId).emit(curSequence.action + 'TEComplete', curStepIndex);
-                        // io.sockets.in(gameId).emit('TEComplete');
+                        io.sockets.in(gameId).emit('TEComplete');
                     };
                 } else {
                     timerOnComplete = function() {

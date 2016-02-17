@@ -23,10 +23,11 @@ var appThis = this;
 module.exports.initApp = initApp;
 module.exports.initUser = initUser;
 
-module.exports.quizIntro = quizIntro;
-module.exports.quizPostIntro = quizPostIntro;
+module.exports.quizBeginning = quizBeginning;
+module.exports.quizPostBeginning = quizPostBeginning;
 module.exports.quizQuestion = quizQuestion;
 module.exports.quizResult = quizResult;
+module.exports.quizEnd = quizEnd;
 
 function initApp(ioInstance) {
 
@@ -50,6 +51,7 @@ function initUser(socket) {
         socket.on('joinGame', joinGame);
         socket.on('startGame', startGame);
         socket.on('voteTheme', voteTheme);
+        socket.on('quitGame', quitGame);
     }   
  
     function userLogin(data) {
@@ -124,7 +126,7 @@ function initUser(socket) {
             data;
 
         myGame = appGames.getGame(gameId);
-        if (_.isUndefined(myGame)) {
+        if (_.isUndefined(myGame) === true) {
             // TODO
             socket.emit('gameNonexistent');         
             console.log('gameNonexistent');
@@ -145,7 +147,6 @@ function initUser(socket) {
     }
 
     function startGame(gameId) {
-        console.log('startGame gameId:' + gameId);
 
         var myGame;
 
@@ -238,6 +239,22 @@ function initUser(socket) {
         }
     }
 
+    function quitGame(gameId) {
+
+        var myGame,
+            myUser;
+
+            console.log('gameId:' + gameId);
+
+        myGame = appGames.getGame(gameId);
+        myUser = appUsers.getUser(socket.id);
+        myGame.removeUser(myUser.socketId);
+        appUsers.removeUser(myUser.socketId);
+
+        socket.emit('gameQuit');
+        console.log('gameQuit gameId:' + gameId + '/user:' + myUser.pseudo);
+    }
+
     // Permet de retirer les méthodes d'un objet = plus léger
     // L'objet récupéré est un clone :
     // Les modifications apportées au clone ne sont pas répercutées sur l'objet original
@@ -246,16 +263,16 @@ function initUser(socket) {
     }
 }
 
-function quizIntro(gameClone) {
-    console.log('quizIntro:' + gameClone.id);
-    io.sockets.in(gameClone.id).emit('quizIntroStarted', gameClone);
+function quizBeginning(gameClone) {
+    console.log('quizBeginning:' + gameClone.id);
+    io.sockets.in(gameClone.id).emit('quizBeginning', gameClone);
 }
 
 // Remplit le rôle de delay
 // Permet au client de charger l'écran des questions au déclenchement de l'événement quizIntroTEComplete
 // Sinon, l'événement quizQuestionStarted de la 1ere question n'est pas interceptée par le client
-function quizPostIntro(gameClone) {
-    console.log('quizPostIntro:' + gameClone.id);
+function quizPostBeginning(gameClone) {
+    console.log('quizPostBeginning:' + gameClone.id);
 }
 
 function quizQuestion(gameClone, questionIndex) {
@@ -265,7 +282,7 @@ function quizQuestion(gameClone, questionIndex) {
         gameClone: gameClone,
         questionIndex: questionIndex
     };
-    io.sockets.in(gameClone.id).emit('quizQuestionStarted', data);
+    io.sockets.in(gameClone.id).emit('quizQuestion', data);
 }
 
 function quizResult(gameClone, questionIndex) {
@@ -275,5 +292,16 @@ function quizResult(gameClone, questionIndex) {
         gameClone: gameClone,
         questionIndex: questionIndex
     };
-    io.sockets.in(gameClone.id).emit('quizResultStarted', data);
+    io.sockets.in(gameClone.id).emit('quizResult', data);
+}
+
+function quizEnd(gameClone) {
+    console.log('quizEnd:' + gameClone.id);
+
+    var myGame;
+
+    myGame = appGames.getGame(gameClone.id);
+    myGame.status = 'waiting';
+
+    io.sockets.in(gameClone.id).emit('quizEnd', gameClone);
 }

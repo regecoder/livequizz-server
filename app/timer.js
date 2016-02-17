@@ -56,7 +56,7 @@ function Timer(duration, type, onComplete, onTick)
             }
         }
 
-        if (count === steps) {
+        if (count >= steps) {
             // console.log('timer complete');
             onComplete();
             return;

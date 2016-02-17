@@ -14,9 +14,9 @@ function Users() {
 
         var myUser = this.getUser(user.socketId);
 
-        if (_.isUndefined(myUser)) {
-            this.count++;
+        if (_.isUndefined(myUser) === true) {
             users[user.socketId] = user;
+            this.count++;
             myUser = users[user.socketId];
         } else {
             myUser = user;
@@ -30,8 +30,8 @@ function Users() {
     };
 
     this.removeUser = function(socketId) {
-        this.count--;
         delete users[socketId];
+        this.count--;
     };
 
     this.forEach = function(callback) {

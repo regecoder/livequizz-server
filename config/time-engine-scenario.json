@@ -1,10 +1,10 @@
 [
     {
-        "action": "quizIntro",
-        "duration": "5"
+        "action": "quizBeginning",
+        "duration": "2"
     },
     {
-        "action": "quizPostIntro",
+        "action": "quizPostBeginning",
         "duration": "1"
     },
     {
@@ -13,12 +13,16 @@
         "scene": [
             {
                 "action": "quizQuestion",
-                "duration": "10"
+                "duration": "2"
             },
             {
                 "action": "quizResult",
-                "duration": "3"
+                "duration": "0"
             }
         ]
+    },
+    {
+        "action": "quizEnd",
+        "duration": "0"
     }
 ]
