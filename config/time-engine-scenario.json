@@ -1,7 +1,7 @@
 [
     {
         "action": "quizBeginning",
-        "duration": "2"
+        "duration": "5"
     },
     {
         "action": "quizPostBeginning",
@@ -13,11 +13,11 @@
         "scene": [
             {
                 "action": "quizQuestion",
-                "duration": "2"
+                "duration": "10"
             },
             {
                 "action": "quizResult",
-                "duration": "0"
+                "duration": "3"
             }
         ]
     },

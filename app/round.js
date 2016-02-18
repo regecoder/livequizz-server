@@ -1,25 +1,50 @@
 'use strict';
 
+var _ = require('../lib/underscore/underscore-min');
+
 module.exports = Round;
 
 function Round(numberQuiz) {
 
 	var that = this;
 
-	var i;
-
 	numberQuiz = numberQuiz || 2;
 
     this.themeVotes = [];
-	for (i = 0; i < numberQuiz; i++) {
-		this.themeVotes.push(0);
-	}
-
 	this.quiz = {};
+	this.users = {};
+    this.usersCount = 0;
+    // Valeur -1 importante puisque cette variable est utilisée
+    // pour démarrer automatiquement la manche
+    this.usersWaited = -1;
 
+    this.addUser = addUser;
+    this.resetThemeVote = resetThemeVote;
     this.addThemeVote = addThemeVote;
     this.getThemeVotesCount = getThemeVotesCount;
     this.getWinnerThemeIndex = getWinnerThemeIndex;
+
+    resetThemeVote();
+
+    function addUser(user) {
+
+        var myUser = _.findWhere(that.users, {socketId: user.socketId});
+
+        if (_.isUndefined(myUser) === true) {
+            myUser = user;
+            that.users[user.socketId] = myUser;
+            this.usersCount++;
+        }
+
+        return myUser;
+    }
+
+    function resetThemeVote() {
+        that.themeVotes = [];
+        for (var i = 0; i < numberQuiz; i++) {
+            that.themeVotes.push(0);
+        }        
+    }
 
     function addThemeVote(themeIndex) {
     	that.themeVotes[themeIndex] += 1;
@@ -27,7 +52,10 @@ function Round(numberQuiz) {
 
     function getThemeVotesCount() {
 
-    	var count = 0;
+    	var count,
+            i;
+
+        count = 0;
 
 		for (i = 0; i < numberQuiz; i++) {
 			count += that.themeVotes[i];
@@ -41,7 +69,8 @@ function Round(numberQuiz) {
     	var maxList,
     		maxValue,
     		curValue,
-    		index;
+    		index,
+            i;
 
     	maxList = [];
     	maxValue = -1;

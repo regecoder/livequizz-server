@@ -52,6 +52,8 @@ function initUser(socket) {
         socket.on('startGame', startGame);
         socket.on('voteTheme', voteTheme);
         socket.on('quitGame', quitGame);
+        socket.on('continueGame', continueGame);
+        socket.on('autostartRound', autostartRound);
     }   
  
     function userLogin(data) {
@@ -76,6 +78,7 @@ function initUser(socket) {
         var newGameId,
             myGame,
             myUser,
+            nextRoundIndex,
             data;
 
         myGame = appGames.getGameByOwnerId(socket.id);
@@ -85,14 +88,23 @@ function initUser(socket) {
         } else {
             newGameId = getNewGameId();
             myUser = appUsers.getUser(socket.id);
-            myGame = new Game(newGameId, myUser);
-            myGame.status = 'waiting';
-            myGame.quizEngine = new QuizEngine();
+            myGame = new Game(newGameId, myUser, new QuizEngine());
             myGame.addUser(myUser);
+            myUser.initGame();
+            
+            myGame.status = 'waiting';
+            myGame.roundIndex = -1;
+
+            nextRoundIndex = myGame.roundIndex + 1;
+            myGame.createRound(nextRoundIndex, new Round());
+            myGame.addUserToRound(nextRoundIndex, myUser);
+            myUser.initRound(nextRoundIndex);
+
             appGames.addGame(myGame);
 
             data = {
                 game: myGame,
+                roundIndex: nextRoundIndex,
                 user: myUser
             };
             socket.join(myGame.id);
@@ -123,6 +135,7 @@ function initUser(socket) {
 
         var myGame,
             myUser,
+            nextRoundIndex,
             data;
 
         myGame = appGames.getGame(gameId);
@@ -133,12 +146,18 @@ function initUser(socket) {
         } else {
             myUser = appUsers.getUser(socket.id);
             myGame.addUser(myUser);
+            myUser.initGame();
+
+            nextRoundIndex = myGame.roundIndex + 1;
+            myGame.addUserToRound(nextRoundIndex, myUser);
+            myUser.initRound(nextRoundIndex);
+
             data = {
                 game: myGame,
+                roundIndex: nextRoundIndex,
                 user: myUser
             };
-
-            // TODO: Vérifier si l'utilisateur n'est pas déjà dans la room
+            // TODO: Vérifier si l'utilisateur n'est pas déjà dans la partie
             socket.join(myGame.id);
             socket.emit('gameJoined', data);
             io.sockets.in(myGame.id).emit('gameUserJoined', data);
@@ -151,34 +170,44 @@ function initUser(socket) {
         var myGame;
 
         myGame = appGames.getGame(gameId);
-        myGame.forEachUser(initUserGame);
         myGame.status = 'started';
 
         io.sockets.in(myGame.id).emit('gameStarted', myGame);
         console.log('gameStarted gameId:' + myGame.id);
 
-        startRound(0, gameId);
-
-        function initUserGame(user) {
-            user.initGame();
-        }
+        startRound(gameId, 0);
     }
 
-    function startRound(roundIndex, gameId) {
+    function startRound(gameId, roundIndex) {
 
         var myGame;
 
         myGame = appGames.getGame(gameId);
-        myGame.forEachUser(initUserRound);
         myGame.quizEngine.loadQuizList();
         myGame.roundIndex = roundIndex;
-        myGame.rounds[roundIndex] = new Round();
 
         io.sockets.in(myGame.id).emit('roundStarted', myGame);
         console.log('roundStarted gameId:' + myGame.id + '/roundId:' + myGame.roundIndex);
+    }
 
-        function initUserRound(user) {
-            user.initRound();
+    function autostartRound(data) {
+
+        var gameId = data.game.id;
+        var roundIndex = data.roundIndex;
+
+        var myTimer = new Timer(5000, 'countdown', timerOnComplete, timerOnTick);
+        myTimer.start();
+
+        function timerOnComplete() {
+            startRound(gameId, roundIndex);
+        }
+
+        function timerOnTick(totalTime, currentTime) {
+            var data = {
+                currentTime: currentTime,
+                totalTime: totalTime
+            };
+            io.sockets.in(gameId).emit('autostartRoundTick', data);
         }
     }
 
@@ -242,17 +271,52 @@ function initUser(socket) {
     function quitGame(gameId) {
 
         var myGame,
-            myUser;
-
-            console.log('gameId:' + gameId);
+            myUser,
+            nextRoundIndex,
+            data;
 
         myGame = appGames.getGame(gameId);
         myUser = appUsers.getUser(socket.id);
         myGame.removeUser(myUser.socketId);
         appUsers.removeUser(myUser.socketId);
 
+        nextRoundIndex = myGame.roundIndex + 1;
+        myGame.rounds[nextRoundIndex].usersWaited --;
+        
+        data = {
+            game: myGame,
+            roundIndex: nextRoundIndex,
+            user: myUser
+        };
+
         socket.emit('gameQuit');
+        io.sockets.in(myGame.id).emit('gameUserQuit', data);
         console.log('gameQuit gameId:' + gameId + '/user:' + myUser.pseudo);
+    }
+
+    function continueGame(gameId) {
+
+        var myGame,
+            myUser,
+            nextRoundIndex,
+            data;
+
+        myGame = appGames.getGame(gameId);
+        myUser = appUsers.getUser(socket.id);
+
+        nextRoundIndex = myGame.roundIndex + 1;
+        myGame.addUserToRound(nextRoundIndex, myUser);
+        myUser.initRound(nextRoundIndex);
+
+        data = {
+            game: myGame,
+            roundIndex: nextRoundIndex,
+            user: myUser
+        };
+
+        socket.emit('gameContinued', data);
+        io.sockets.in(myGame.id).emit('gameUserJoined', data);
+        console.log('gameContinued gameId:' + gameId + '/user:' + myUser.pseudo);
     }
 
     // Permet de retirer les méthodes d'un objet = plus léger
@@ -298,10 +362,16 @@ function quizResult(gameClone, questionIndex) {
 function quizEnd(gameClone) {
     console.log('quizEnd:' + gameClone.id);
 
-    var myGame;
+    var myGame,
+        nextRoundIndex;
 
     myGame = appGames.getGame(gameClone.id);
     myGame.status = 'waiting';
+
+    nextRoundIndex = myGame.roundIndex + 1;
+    myGame.createRound(nextRoundIndex, new Round());
+    myGame.rounds[nextRoundIndex].usersWaited = myGame.rounds[myGame.roundIndex].usersCount;
+
 
     io.sockets.in(gameClone.id).emit('quizEnd', gameClone);
 }
