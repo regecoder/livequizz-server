@@ -13,6 +13,10 @@
         "scene": [
             {
                 "action": "quizQuestion",
+                "duration": "2"
+            },
+            {
+                "action": "quizAnswer",
                 "duration": "10"
             },
             {

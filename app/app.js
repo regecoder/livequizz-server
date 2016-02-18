@@ -26,6 +26,7 @@ module.exports.initUser = initUser;
 module.exports.quizBeginning = quizBeginning;
 module.exports.quizPostBeginning = quizPostBeginning;
 module.exports.quizQuestion = quizQuestion;
+module.exports.quizAnswer = quizAnswer;
 module.exports.quizResult = quizResult;
 module.exports.quizEnd = quizEnd;
 
@@ -347,6 +348,16 @@ function quizQuestion(gameClone, questionIndex) {
         questionIndex: questionIndex
     };
     io.sockets.in(gameClone.id).emit('quizQuestion', data);
+}
+
+function quizAnswer(gameClone, questionIndex) {
+    console.log('quizAnswer:' + gameClone.id + '/' + questionIndex);
+
+    var data = {
+        gameClone: gameClone,
+        questionIndex: questionIndex
+    };
+    io.sockets.in(gameClone.id).emit('quizAnswer', data);
 }
 
 function quizResult(gameClone, questionIndex) {
