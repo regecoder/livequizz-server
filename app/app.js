@@ -55,6 +55,7 @@ function initUser(socket) {
         socket.on('quitGame', quitGame);
         socket.on('continueGame', continueGame);
         socket.on('autostartRound', autostartRound);
+        socket.on('scorePoints', scorePoints);
     }   
  
     function userLogin(data) {
@@ -91,7 +92,6 @@ function initUser(socket) {
             myUser = appUsers.getUser(socket.id);
             myGame = new Game(newGameId, myUser, new QuizEngine());
             myGame.addUser(myUser);
-            myUser.initGame();
             
             myGame.status = 'waiting';
             myGame.roundIndex = -1;
@@ -99,7 +99,6 @@ function initUser(socket) {
             nextRoundIndex = myGame.roundIndex + 1;
             myGame.createRound(nextRoundIndex, new Round());
             myGame.addUserToRound(nextRoundIndex, myUser);
-            myUser.initRound(nextRoundIndex);
 
             appGames.addGame(myGame);
 
@@ -147,11 +146,9 @@ function initUser(socket) {
         } else {
             myUser = appUsers.getUser(socket.id);
             myGame.addUser(myUser);
-            myUser.initGame();
 
             nextRoundIndex = myGame.roundIndex + 1;
             myGame.addUserToRound(nextRoundIndex, myUser);
-            myUser.initRound(nextRoundIndex);
 
             data = {
                 game: myGame,
@@ -269,6 +266,23 @@ function initUser(socket) {
         }
     }
 
+    function scorePoints(data) {
+
+        var myGame,
+            myRound,
+            totalPoints,
+            clientData;
+
+        myGame = appGames.getGame(data.gameId);
+        myRound = myGame.rounds[myGame.roundIndex];
+        totalPoints = myRound.scorePoints(socket.id, data.points);
+
+        clientData = {
+            totalPoints: totalPoints
+        };
+        socket.emit('pointsScored', clientData);
+    }
+
     function quitGame(gameId) {
 
         var myGame,
@@ -307,7 +321,6 @@ function initUser(socket) {
 
         nextRoundIndex = myGame.roundIndex + 1;
         myGame.addUserToRound(nextRoundIndex, myUser);
-        myUser.initRound(nextRoundIndex);
 
         data = {
             game: myGame,
@@ -374,15 +387,24 @@ function quizEnd(gameClone) {
     console.log('quizEnd:' + gameClone.id);
 
     var myGame,
-        nextRoundIndex;
+        myWinner,
+        nextRoundIndex,
+        data;
+
 
     myGame = appGames.getGame(gameClone.id);
     myGame.status = 'waiting';
+
+    myWinner = myGame.rounds[myGame.roundIndex].getWinner();
 
     nextRoundIndex = myGame.roundIndex + 1;
     myGame.createRound(nextRoundIndex, new Round());
     myGame.rounds[nextRoundIndex].usersWaited = myGame.rounds[myGame.roundIndex].usersCount;
 
+    data = {
+        game: myGame,
+        winner: myWinner
+    };
 
-    io.sockets.in(gameClone.id).emit('quizEnd', gameClone);
+    io.sockets.in(gameClone.id).emit('quizEnd', data);
 }

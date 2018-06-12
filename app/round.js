@@ -19,12 +19,24 @@ function Round(numberQuiz) {
     this.usersWaited = -1;
 
     this.addUser = addUser;
+    this.getUser = getUser;
     this.resetThemeVote = resetThemeVote;
     this.addThemeVote = addThemeVote;
     this.getThemeVotesCount = getThemeVotesCount;
     this.getWinnerThemeIndex = getWinnerThemeIndex;
+    this.scorePoints = scorePoints;
+    this.getWinner = getWinner;
+
 
     resetThemeVote();
+
+    function forEachUser(callback) {
+        for (var key in that.users) {
+            if (that.users.hasOwnProperty(key)) {
+                callback(that.users[key]);
+            }
+        }        
+    }
 
     function addUser(user) {
 
@@ -32,11 +44,22 @@ function Round(numberQuiz) {
 
         if (_.isUndefined(myUser) === true) {
             myUser = user;
+            myUser.points = 0;
             that.users[user.socketId] = myUser;
             this.usersCount++;
         }
 
         return myUser;
+    }
+
+    function getUser(socketId) {
+        return that.users[socketId];
+    }
+
+    function scorePoints(socketId, points) {
+        var myUser = getUser(socketId);
+        myUser.points += points;
+        return myUser.points;
     }
 
     function resetThemeVote() {
@@ -91,5 +114,31 @@ function Round(numberQuiz) {
     	}
 
     	return index;
+    }
+
+    function getWinner() {
+
+        var myWinner,
+            userWinner,
+            maxScore;
+
+        maxScore = -1;
+        forEachUser(checkWinner);
+
+        function checkWinner(myUser) {
+            if (myUser.points >= maxScore) {
+                userWinner = {
+                    pseudo: myUser.pseudo,
+                    points: myUser.points
+                };
+                if (myUser.points > maxScore) {
+                    myWinner = [userWinner];
+                } else {
+                    myWinner.push(userWinner);
+                }
+                maxScore = myUser.points;
+            }
+        }
+        return myWinner;
     }
 }

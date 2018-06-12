@@ -4,25 +4,14 @@ module.exports = User;
 
 function User(socketId, pseudo) {
 
+    // var that = this;
+
     var nearGames = [];
 
     this.socketId = socketId;
     this.pseudo = pseudo;
+    this.profile = 'Novice';
     this.position = {};
-    this.game = {};
-
-    this.initGame = initGame;
-    this.initRound = initRound;
-
-    function initGame() {
-        this.game = {
-            rounds: []
-        };
-    }
-
-    function initRound(roundIndex) {
-        this.game.rounds[roundIndex] = {};
-    }
 
     this.addNearGame = function(gameId, distance) {
 
